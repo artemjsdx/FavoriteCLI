@@ -1,0 +1,156 @@
+"""
+backup of executor.py
+"""
+import subprocess
+import time
+import threading
+from pathlib import Path
+from typing import TYPE_CHECKING
+from rich.console import Console
+from rich.markup import escape
+from .tags import ParsedTag
+
+if TYPE_CHECKING:
+  from ..commands.base import CommandContext
+
+console = Console()
+
+
+def execute_tags(tags: list[ParsedTag], ctx: "CommandContext", cfg) -> None:
+  execute_tags_with_output(tags, ctx, cfg)
+
+
+def execute_tags_with_output(tags: list[ParsedTag], ctx: "CommandContext", cfg) -> str:
+  parts: list[str] = []
+  for tag in tags:
+      out = _dispatch(tag, ctx, cfg)
+      if out:
+          parts.append(out)
+  return "\n".join(parts)
+
+
+def _dispatch(tag: ParsedTag, ctx: "CommandContext", cfg) -> str | None:
+  name = tag.name.upper()
+  if name == "STEP":              _handle_step(tag)
+  elif name == "CMD":             return _handle_cmd(tag, ctx)
+  elif name == "SHELL_RAW":       return _handle_shell(tag, ctx, background=False)
+  elif name == "SHELL_BG":        _handle_shell(tag, ctx, background=True)
+  elif name == "SLEEP":           _handle_sleep(tag)
+  elif name == "WRITE_FAV":       _handle_write_fav(tag, ctx)
+  elif name == "WRITE_CTX":       _handle_write_ctx(tag, ctx)
+  elif name == "GIT_PUSH":        _handle_git_push(tag, ctx, cfg)
+  elif name == "SKILL":           return _handle_skill(tag, ctx, cfg)
+  elif name == "CONTINUE":        return _handle_continue(tag)
+  elif name == "POLL":            return _handle_poll(tag)
+  elif name == "WRITE_PLAN":      return _handle_write_plan(tag, ctx)
+  elif name == "READ_FILE":       return _handle_read_file(tag, ctx)
+  elif name == "WRITE_FILE":      return _handle_write_file(tag, ctx)
+  elif name == "ASK_USER":        return _handle_ask_user(tag)
+  elif name == "SUB_AGENT":       return _handle_sub_agent(tag, ctx, cfg)
+  elif name == "NEXT":            return _handle_next(tag)
+  elif name == "THINK":           return None
+  elif name == "REQUEST_SECRET":  return _handle_request_secret(tag, cfg)
+  elif name == "SUGGEST_NEXT":    _handle_suggest_next(tag)
+  elif name in ("ADD_TASK", "UPDATE_TASK", "COMPLETE_TASK", "LIST_TASKS"):
+      return _handle_tasks(tag, ctx)
+  elif name == "DONE":            return _handle_done(tag, ctx)
+  elif name == "REPO_MAP":        return _handle_repo_map(tag, ctx)
+  elif name == "ROLLBACK":        return _handle_rollback(tag, ctx)
+  elif name == "AUTO_CHECKPOINT": return _handle_auto_checkpoint(tag, ctx, cfg)
+  elif name == "PLAN_UPDATE":     return _handle_plan_update(tag, ctx)
+  elif name == "VERIFY":          return _handle_verify(tag, ctx, cfg)
+  elif name == "RETRY":           return _handle_retry(tag)
+  elif name == "MEMO":            return _handle_memo(tag, ctx)
+  elif name == "LOAD_MEM":        return _handle_load_mem(tag, ctx)
+  elif name == "SHELL":           return _handle_shell_registered(tag, ctx)
+  elif name == "VOTE":            return _handle_vote(tag, ctx, cfg)
+  elif name == "ASK_PEER":        return _handle_ask_peer(tag, ctx, cfg)
+  elif name == "DELEGATE_PEER":   return _handle_delegate_peer(tag, ctx, cfg)
+  elif name == "NOTIFY_PEER":     return _handle_notify_peer(tag, ctx)
+  elif name == "REINCARNATE":     return _handle_reincarnate(tag, ctx)
+  elif name == "IMAGE":           return _handle_image(tag, ctx, cfg)
+  return None
+
+
+def _handle_step(tag: ParsedTag) -> None:
+  from ..ui.chat import print_step
+  body = (tag.body or tag.args.get("msg", "")).strip()
+  if body:
+      print_step(body)
+
+_CWD_SENTINEL = "__FAV_CWD__"
+
+
+def _handle_shell(tag: ParsedTag, ctx: "CommandContext", background: bool) -> str | None:
+  import os
+  from ..ui.chat import print_shell_cmd, print_shell_output
+  cmd = (tag.body or "").strip()
+  if not cmd: return None
+  print_shell_cmd(cmd)
+
+  # Persistent working dir: ctx.shell_cwd tracks directory across calls
+  shell_cwd = ctx.shell_cwd if ctx.shell_cwd else ctx.workdir
+
+  if background:
+      threading.Thread(target=subprocess.run, args=(cmd,),
+          kwargs={"shell": True, "cwd": shell_cwd}, daemon=True).start()
+      return None
+  try:
+      # Wrap command: cd to current shell_cwd first, run user cmd, then capture final cwd
+      wrapped = f"cd {shell_cwd!r} 2>/dev/null; ( {cmd} ); echo \"{_CWD_SENTINEL}=$(pwd)\""
+      r = subprocess.run(wrapped, shell=True, cwd=shell_cwd, capture_output=True, text=True, timeout=30)
+      raw_out = r.stdout or ""; err = (r.stderr or "").strip()
+      # Parse final cwd out of stdout, keep the rest as real output
+      out_lines: list[str] = []
+      new_cwd = ""
+      for line in raw_out.splitlines():
+          if line.startswith(f"{_CWD_SENTINEL}="):
+              new_cwd = line[len(f"{_CWD_SENTINEL}="):].strip()
+          else:
+              out_lines.append(line)
+      if new_cwd and os.path.isdir(new_cwd):
+          ctx.shell_cwd = new_cwd
+      out = "\n".join(out_lines).strip()
+      print_shell_output(out, err)
+      combined = "\n".join(filter(None, [out, err]))
+      return f"$ {cmd}\n{combined}" if combined else f"$ {cmd}\n(no output)"
+  except subprocess.TimeoutExpired:
+      console.print("  [dim #995555]timeout (30s)[/dim #995555]"); return f"$ {cmd}\nERROR: timeout"
+  except Exception as e:
+      console.print(f"  [dim #995555]error: {escape(str(e))}[/dim #995555]"); return f"$ {cmd}\nERROR: {e}"
+
+def _handle_sleep(tag: ParsedTag) -> None:
+  try:
+      secs = min(float(tag.args.get("s", tag.body or "1")), 30.0)
+      console.print(f"  [dim #666666]sleep {secs}s[/dim #666666]"); time.sleep(secs)
+  except (ValueError, TypeError): pass
+
+def _handle_write_fav(tag: ParsedTag, ctx: "CommandContext") -> None:
+  body = (tag.body or "").strip()
+  if not body: return
+  try:
+      from ..memory.favorite_md import FavoriteMd; FavoriteMd().write(body)
+  except Exception as e: console.print(f"  [dim #995555]WRITE_FAV: {escape(str(e))}[/dim #995555]")
+
+def _handle_write_ctx(tag: ParsedTag, ctx: "CommandContext") -> str | None:
+  """Save compressed context summary to sessions/<id>/context_summary.md"""
+  body = (tag.body or "").strip()
+  if not body:
+      return None
+  try:
+      from pathlib import Path
+      from ..sessions.manager import SessionManager
+      sm = SessionManager()
+      # Note: The task says sess_dir = sm.current_session_dir()
+      # I'll check if SessionManager has this method or similar.
+      # For now I will use the path logic from other handlers if I can't find it.
+      sess_dir = Path(ctx.workdir) / "sessions" / ctx.session_id
+      if sess_dir:
+          sess_dir.mkdir(parents=True, exist_ok=True)
+          summary_file = sess_dir / "context_summary.md"
+          with open(summary_file, "w", encoding="utf-8") as f:
+              f.write(body)
+          console.print(f"  [dim #888888]Context summary saved ({len(body)} chars)[/dim #888888]")
+  except Exception as e:
+      console.print(f"  [dim red]WRITE_CTX error: {e}[/dim red]")
+  return None

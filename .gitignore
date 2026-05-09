@@ -1,0 +1,151 @@
+# Python bytecode
+  __pycache__/
+  *.py[cod]
+  *.pyo
+  *.pyd
+  .Python
+
+  # Dist
+  *.egg-info/
+  dist/
+  build/
+  .eggs/
+
+  # Logs
+  *.log
+  *.nohup
+  *.errlog
+  nohup.out
+
+  # Session files (keep structure, not content)
+  sessions/*/history.jsonl
+  sessions/*/auto.log
+
+  # Временные файлы самого агента
+  out_*.txt
+  detective_out_*.txt
+  *.bmp
+  backups/
+  improvements.json
+  capsule_*.bin
+  capsule_*.txt
+
+  # Скрипты агента не из FavoriteCLI
+  analyze_*.py
+  audit_task.py
+  bf.py
+  chain*.sh
+  chain*.awk
+  clone_box.py
+  cpu_jitter_pulse.py
+  crypto.py
+  decode_*.py
+  decrypt_capsule.py
+  diag_encoding.py
+  disk_monitor.sh
+  encrypt_capsule.py
+  entropy_viz.py
+  exec_check.py
+  fix_*.py
+  float_test.py
+  fs_map.py
+  full_stego.py
+  hello_world.py
+  improve_self.py*
+  index.html
+  launch_tests.sh
+  mystery_box.py
+  nuclear_server.py
+  out.py
+  stress_test_logs/
+  calculator/
+  converter.py
+  X
+  final_report.txt
+  archaeology_report.*
+  CI_CD_REPORT.md
+  FINAL_REPORT.md
+  README_NEW.md
+  CONTRIBUTING.md
+  ARCHITECTURE.md
+  detective_report.txt
+  detect*.log
+  playerok*.log
+  pip_fix.log
+  .trashed-*
+  
+# Sensitive config (use *.example templates instead)
+config/github.json
+config/api_keys.json
+config/tg_*.json
+
+config/user_agents.json
+*.txt filter:lfs diff=lfs merge=lfs -text
+
+  # Secrets — never commit (use *.example templates)
+  config/agents_config.json
+  config/user_agents.json
+  config/api_keys.json
+  config/tg_*.json
+  config/loader_cache.json
+  replitperenos*.txt
+  sessions/
+  *.jsonl
+  run_playerok.py
+  run_zerogram.py
+  patch_*.py
+  fix_*.py
+  test_*.py
+  auto_test_runner.py
+  extended_test_runner.py
+  GITIGNORE_EOF
+
+  # 2. Создаём agents_config.example.json
+  cat > config/agents_config.example.json << 'EOF'
+  {
+    "agents": [
+      {
+        "id": "main-1",
+        "name": "main-1",
+        "provider": "openrouter",
+        "model_id": "qwen/qwen3-coder:free",
+        "api_key": "YOUR_OPENROUTER_KEY_HERE",
+        "role": "general",
+        "bio": "Default main agent",
+        "active": true,
+        "is_leading": true,
+        "ctx_used_pct": 0.0
+      }
+    ]
+  }
+  EOF
+
+  echo "gitignore updated and example created"
+  git status --short 2>&1 | head -20
+# Auto-added: secret/temp files
+config/api_keys.json.template
+playerok_turn_7.txt
+playerok_task.txt
+playerok*.txt
+zerogram_task.txt
+zerogram_turn_*.txt
+test_extended.py
+test_reincarnation.py
+test_fav_api.py
+testCLI.txt
+path
+path
+
+# Files with secrets
+config/api_keys.json
+replitperenos.txt
+run_zerogram.py
+zerogram_*.txt
+zerogram_out_*.txt
+detective_out_*.txt
+out_t*.txt
+out_fix*.txt
+out_a_*.txt
+out_b_*.txt
+out_c_*.txt
+out_d_*.txt
