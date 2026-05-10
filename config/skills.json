@@ -1,0 +1,24 @@
+{
+    "websearch":      {"enabled": true,  "lazy": false, "description": "Web search via DuckDuckGo"},
+    "fetch_url":      {"enabled": true,  "lazy": false, "description": "Fetch full URL content"},
+    "fs_tools":       {"enabled": true,  "lazy": false, "description": "File system: read/write/list/delete"},
+    "termux_shell":   {"enabled": true,  "lazy": false, "description": "Termux shell integration"},
+    "sleep":          {"enabled": true,  "lazy": false, "description": "Sleep N seconds"},
+    "compaction":     {"enabled": true,  "lazy": true,  "description": "Compress conversation history to save tokens"},
+    "hooks":          {"enabled": false, "lazy": true,  "description": "Lifecycle hooks: on_done, on_push, etc."},
+    "auto_context":   {"enabled": false, "lazy": true,  "description": "Auto-inject relevant file snippets by keywords"},
+    "retry":          {"enabled": true,  "lazy": false, "description": "Retry control for agent tasks"},
+    "web_panel":      {"enabled": false, "lazy": true,  "description": "FastAPI web dashboard for session monitoring"},
+    "internet":       {"enabled": false, "lazy": true,  "ready": false, "description": "Browser automation via FavoriteChrome"},
+    "ocr":            {"enabled": false, "lazy": true,  "ready": false, "description": "OCR: text extraction from images"},
+    "markitdown":     {"enabled": false, "lazy": true,  "ready": false, "description": "Convert PDF/DOCX/HTML to Markdown"},
+    "obsidian":       {"enabled": false, "lazy": false, "description": "Obsidian vault integration"},
+    "tg_bot_input":   {"enabled": false, "lazy": true,  "description": "Telegram bot as CLI interface"},
+    "notification_composer": {"enabled": false, "lazy": false, "description": "Compose Telegram/push notifications"},
+    "tts_announce":   {"enabled": false, "lazy": false, "description": "Text-to-speech announcements"},
+    "task_manager":   {"enabled": true,  "lazy": false, "description": "Task list management"},
+    "memory_manager": {"enabled": true,  "lazy": false, "description": "Long-term memory management"},
+    "code_review":    {"enabled": false, "lazy": true,  "description": "Automated code review"},
+    "test_runner":    {"enabled": false, "lazy": true,  "description": "Run test suites"}
+  }
+  

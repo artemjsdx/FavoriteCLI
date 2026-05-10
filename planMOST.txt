@@ -1,0 +1,135 @@
+planMOST.txt — Мост FavoriteAPI <-> FavoriteCLI (автообновление URL)
+======================================================================
+
+ПРОБЛЕМА
+--------
+Cloudflare Quick Tunnel генерирует новый URL при каждом запуске api.py.
+FavoriteCLI хранит URL локально — после перезапуска сервера он устаревает.
+Пользователь вынужден вручную вводить новый URL каждый раз.
+
+ИДЕЯ
+----
+FavoriteAPI уже умеет слать Telegram-уведомления о новом URL через бота.
+FavoriteCLI должен уметь читать этот URL оттуда же — без лишних зависимостей,
+через обычный HTTP к Telegram Bot API (requests уже есть в зависимостях).
+
+АРХИТЕКТУРА МОСТА
+-----------------
+
+  [FavoriteAPI]                          [FavoriteCLI]
+      |                                       |
+  При запуске/смене URL:              При старте / при ConnectionError:
+  - Отправить сообщение в TG-чат      - GET последнего сообщения от бота
+    формата: "FAPI_URL:<url>"          - Распарсить URL
+  - Если сообщение уже есть —         - Сохранить в конфиг
+    редактировать то же (один msg_id)  - Повторить запрос прозрачно
+  - Хранить msg_id в памяти
+
+ФОРМАТ СООБЩЕНИЯ В TELEGRAM
+----------------------------
+Бот шлёт в целевой чат (TG_NOTIFY_CHATS) сообщение вида:
+  FAPI_URL:https://xxxx.trycloudflare.com
+
+При смене URL — редактирует то же сообщение (editMessageText).
+Это даёт один источник правды без истории мусорных сообщений.
+
+КОНФИГУРАЦИЯ (общая для обоих проектов)
+----------------------------------------
+FavoriteAPI (.env):
+  TG_NOTIFY_TOKEN=<токен бота>     # уже есть
+  TG_NOTIFY_CHATS=<chat_id>        # уже есть
+
+FavoriteCLI (config/api_keys.json):
+  "tg_bridge": {
+    "bot_token": "<токен бота>",   # тот же бот
+    "chat_id": "<chat_id>"         # тот же чат
+  }
+
+Пользователь вводит токен и chat_id один раз через команду /Favorite API.
+
+ШАГИ РЕАЛИЗАЦИИ
+---------------
+
+ШАГ 1 — FavoriteAPI: публикация URL в Telegram (freeapi/tg_notify.py)
+  1.1 При отправке нового URL — слать сообщение "FAPI_URL:<url>"
+  1.2 Хранить msg_id последнего URL-сообщения (в памяти процесса)
+  1.3 При следующей смене URL — editMessageText с тем же msg_id
+  1.4 На старте API — всегда слать/обновлять URL-сообщение
+
+ШАГ 2 — FavoriteCLI: получение URL из Telegram (favorite/bridge/tg_url.py)
+  2.1 Новый модуль bridge/tg_url.py:
+      - fetch_url_from_tg(bot_token, chat_id) -> str | None
+        * GET https://api.telegram.org/bot<token>/getUpdates?limit=100
+          или getChat + getChatHistory если есть доступ
+        * Ищет последнее сообщение от бота со строкой "FAPI_URL:"
+        * Возвращает URL
+      - Кэш в памяти (TTL 30 сек) — не долбим Telegram каждым запросом
+
+  2.2 В config/loader.py — методы:
+      - tg_bridge_token / tg_bridge_chat_id (чтение)
+      - set_tg_bridge(token, chat_id) (запись)
+
+  2.3 В favorite/app.py — при ConnectionError:
+      * Если tg_bridge настроен — автоматически fetсhать URL из TG
+      * Обновить cfg.favorite_api_base_url
+      * Повторить запрос (1 авторетрай)
+      * Если TG не дал URL — показать ручной ввод как сейчас
+
+ШАГ 3 — Бесшовность при смене URL во время работы
+  3.1 FavoriteCLI: при любом ConnectionError (не только на старте):
+      - Автоматический фетч нового URL из TG
+      - 3 секунды паузы (туннель может подниматься)
+      - Авторетрай запроса с новым URL
+      - Юзер видит только: "Переподключаюсь..." и потом ответ агента
+  3.2 Spinner показывает "Переподключаюсь..." вместо обычного ●
+
+ШАГ 4 — Настройка через /Favorite API команду
+  4.1 В FavoriteApiCommand добавить пункт "Настроить мост (TG URL)"
+  4.2 Запросить: токен бота, ID чата
+  4.3 Сохранить в config/api_keys.json → "tg_bridge"
+  4.4 Показать статус: "Мост активен / не настроен"
+
+ОГРАНИЧЕНИЯ И РЕШЕНИЯ
+---------------------
+- getUpdates требует что бот не используется другим polling'ом.
+  РЕШЕНИЕ: использовать getChat + forwardMessage или слать URL
+  в специальный формат, читать через getChatHistory если бот-owner чата.
+  ЛУЧШИЙ ВАРИАНТ: использовать публичный канал — любой может читать
+  последнее сообщение через getUpdates без конфликтов.
+
+- Если TG_NOTIFY_CHATS — личный чат (не канал):
+  FavoriteCLI читает через getUpdates (бот должен быть не polling).
+  Если канал (@username) — через getMessages публично.
+
+- Первый запуск без настроенного моста — ручной ввод URL как сейчас.
+
+ИТОГОВЫЙ UX
+-----------
+1. Пользователь один раз вводит токен бота и chat_id в /Favorite API
+2. Дальше всё автоматически:
+   - Запустил FavoriteAPI → бот написал URL в чат
+   - FavoriteCLI на старте или при ошибке — сам достал URL из TG
+   - Смена URL во время сессии → CLI переподключается тихо,
+     запрос юзера не теряется, ответ приходит с небольшой задержкой
+
+ФАЙЛЫ КОТОРЫЕ ЗАТРОНЕТ РЕАЛИЗАЦИЯ
+-----------------------------------
+FavoriteAPI:
+  freeapi/tg_notify.py          — слать/редактировать URL-сообщение
+  freeapi/tunnel.py             — вызывать notify при смене URL
+
+FavoriteCLI:
+  favorite/bridge/__init__.py   — новый модуль
+  favorite/bridge/tg_url.py     — fetch_url_from_tg() + кэш
+  favorite/config/loader.py     — tg_bridge_token/chat_id/set_tg_bridge
+  favorite/app.py               — авторетрай через TG при ConnectionError
+  favorite/commands/favorite_api.py — настройка моста в UI
+
+ПОРЯДОК РАЗРАБОТКИ
+------------------
+  [FAPI-1] tg_notify.py: отправка/редактирование FAPI_URL-сообщения
+  [FAPI-2] tunnel.py: вызов FAPI-1 при смене URL
+  [CLI-1]  bridge/tg_url.py: чтение URL из TG + кэш
+  [CLI-2]  config/loader.py: tg_bridge поля
+  [CLI-3]  app.py: авторетрай при ConnectionError
+  [CLI-4]  favorite_api команда: настройка моста

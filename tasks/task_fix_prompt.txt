@@ -1,0 +1,25 @@
+Ты должен улучшить собственный системный промпт — файл favorite/agent/system_prompt.py.
+
+  Конкретная проблема: ты никогда не используешь суб-агентов, хотя тег <SUB_AGENT:role=X> существует
+  и обрабатывается в executor.py. Причина — в твоём системном промпте нет объяснения синтаксиса
+  этого тега и когда его применять.
+
+  Твоя задача:
+
+  1. Прочитай favorite/agent/system_prompt.py — найди функцию _sub_agents_block()
+  2. Прочитай favorite/agent/sub_roles_library.json — посмотри какие роли доступны
+  3. Прочитай favorite/agent/executor.py — найди _handle_sub_agent() чтобы понять точный синтаксис тега
+  4. Обнови функцию _sub_agents_block() так чтобы она ВСЕГДА возвращала:
+     - Полный список доступных ролей (id + description) из sub_roles_library.json
+     - Синтаксис тега: <SUB_AGENT:role=ROLE_ID>задание</SUB_AGENT>
+     - Когда применять (минимум 4 конкретных случая)
+     - 2-3 примера использования
+     Список агентов из user_agents.json добавлять только если они есть (как сейчас)
+
+  5. Проверь что файл парсится без ошибок:
+     python -c "from favorite.agent.system_prompt import build_system_prompt; p = build_system_prompt(); print('OK, len:', len(p)); print('SUB_AGENT in prompt:', 'SUB_AGENT' in p)"
+
+  6. Если проверка прошла — сохрани файл.
+
+  Критерий успеха: 'SUB_AGENT in prompt: True' в выводе проверочной команды.
+  

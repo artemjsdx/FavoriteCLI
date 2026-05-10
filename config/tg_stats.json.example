@@ -1,0 +1,15 @@
+{
+  "api_id": "ВАШ_API_ID",
+  "api_hash": "ВАШ_API_HASH",
+  "save_session": true,
+  "output_file": "telegram_stats.json",
+  "get_dialogs_limit": 1000,
+  "include_details": {
+    "dialogs": true,
+    "saved_messages": true,
+    "channels": true,
+    "groups": true,
+    "bots": true
+  },
+  "last_check": null
+}

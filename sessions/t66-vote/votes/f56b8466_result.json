@@ -1,0 +1,17 @@
+{
+  "vote_id": "f56b8466",
+  "question": "Approve T66?",
+  "options": [
+    "yes",
+    "no"
+  ],
+  "votes": {
+    "yes": 0,
+    "no": 0
+  },
+  "winner": "yes",
+  "total": 0,
+  "unanimous": false,
+  "ballots": {},
+  "completed_at": "2026-05-09T08:23:49.098759"
+}

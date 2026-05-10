@@ -1,0 +1,13 @@
+{
+  "session_id": "8b404152-bd1a-45b3-b978-647d3d8fc9c9",
+  "title": "T42 help",
+  "created_at": "2026-05-09T11:47:00.575883+00:00",
+  "workdir": "/storage/emulated/0/Цхранилище/Project/FavoriteCLI",
+  "leading_main_agent": "",
+  "agents": [],
+  "stats": {
+    "total_tokens": 0,
+    "requests": 0,
+    "start_time": "2026-05-09T11:47:00.575900+00:00"
+  }
+}

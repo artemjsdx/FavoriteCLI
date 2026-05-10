@@ -1,0 +1,1 @@
+{"main": {"name": "YourModel", "active": true, "model": "MODEL_ID", "provider": "openrouter", "api_key": "YOUR_OR_KEY", "custom_prompt": null}, "agents": []}

@@ -1,0 +1,17 @@
+{
+  "bot_token": "",
+  "recipients": [],
+  "enabled": false,
+  "routing": "log_only",
+  "quiet_hours": null,
+  "events": {
+    "final_answers": true,
+    "main_thoughts": true,
+    "sub_replies": false,
+    "system_events": true,
+    "votes": true,
+    "checkpoints": true,
+    "steps": false,
+    "questions": true
+  }
+}

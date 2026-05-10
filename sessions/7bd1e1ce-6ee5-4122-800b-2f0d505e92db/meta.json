@@ -1,0 +1,13 @@
+{
+  "session_id": "7bd1e1ce-6ee5-4122-800b-2f0d505e92db",
+  "title": "Новая сессия",
+  "created_at": "2026-05-09T08:20:54.691982+00:00",
+  "workdir": "",
+  "leading_main_agent": "",
+  "agents": [],
+  "stats": {
+    "total_tokens": 0,
+    "requests": 0,
+    "start_time": "2026-05-09T08:20:54.691997+00:00"
+  }
+}

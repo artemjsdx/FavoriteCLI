@@ -1,0 +1,351 @@
+{
+  "gemini-3.0-flash-thinking": {
+    "provider": "favoriteapi",
+    "modalities_in": [
+      "text",
+      "image"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "reasoning",
+      "code",
+      "vision",
+      "long_context"
+    ],
+    "context_kb": 200,
+    "cost_tier": "low",
+    "vision": true,
+    "image_gen": false,
+    "audio_in": false,
+    "audio_out": false
+  },
+  "gemini-3.0-flash": {
+    "provider": "favoriteapi",
+    "modalities_in": [
+      "text",
+      "image"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "code",
+      "vision",
+      "long_context"
+    ],
+    "context_kb": 200,
+    "cost_tier": "low",
+    "vision": true,
+    "image_gen": false,
+    "audio_in": false,
+    "audio_out": false
+  },
+  "gemini-2.5-flash-thinking": {
+    "provider": "favoriteapi",
+    "modalities_in": [
+      "text",
+      "image"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "reasoning",
+      "code",
+      "vision"
+    ],
+    "context_kb": 200,
+    "cost_tier": "low",
+    "vision": true,
+    "image_gen": false
+  },
+  "gemini-2.5-flash": {
+    "provider": "favoriteapi",
+    "modalities_in": [
+      "text",
+      "image"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "code",
+      "vision"
+    ],
+    "context_kb": 200,
+    "cost_tier": "free",
+    "vision": true,
+    "image_gen": false
+  },
+  "gemini-2.5-mini-thinking": {
+    "provider": "favoriteapi",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "reasoning",
+      "code"
+    ],
+    "context_kb": 200,
+    "cost_tier": "free",
+    "vision": false,
+    "image_gen": false
+  },
+  "gemini-2.5-mini": {
+    "provider": "favoriteapi",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "code"
+    ],
+    "context_kb": 200,
+    "cost_tier": "free",
+    "vision": false,
+    "image_gen": false
+  },
+  "qwen/qwen3-coder:free": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "code",
+      "reasoning",
+      "long_context"
+    ],
+    "context_kb": 32,
+    "cost_tier": "free",
+    "vision": false,
+    "image_gen": false,
+    "audio_in": false,
+    "audio_out": false
+  },
+  "qwen/qwen3-235b-a22b:free": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "reasoning",
+      "code",
+      "long_context"
+    ],
+    "context_kb": 40,
+    "cost_tier": "free",
+    "vision": false,
+    "image_gen": false
+  },
+  "openai/gpt-4o": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text",
+      "image"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "vision",
+      "code",
+      "reasoning"
+    ],
+    "context_kb": 128,
+    "cost_tier": "paid",
+    "vision": true,
+    "image_gen": false,
+    "audio_in": false,
+    "audio_out": false
+  },
+  "openai/gpt-4o-mini": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text",
+      "image"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "vision",
+      "code"
+    ],
+    "context_kb": 128,
+    "cost_tier": "low",
+    "vision": true,
+    "image_gen": false
+  },
+  "openai/gpt-image-1": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "image"
+    ],
+    "capabilities": [
+      "image_gen"
+    ],
+    "cost_tier": "paid",
+    "vision": false,
+    "image_gen": true,
+    "audio_in": false,
+    "audio_out": false
+  },
+  "anthropic/claude-3.5-sonnet": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text",
+      "image"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "vision",
+      "code",
+      "reasoning",
+      "long_context"
+    ],
+    "context_kb": 200,
+    "cost_tier": "paid",
+    "vision": true,
+    "image_gen": false
+  },
+  "anthropic/claude-3-haiku": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text",
+      "image"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "vision",
+      "code"
+    ],
+    "context_kb": 200,
+    "cost_tier": "low",
+    "vision": true,
+    "image_gen": false
+  },
+  "google/gemini-2.0-flash-exp:free": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text",
+      "image"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "vision",
+      "code"
+    ],
+    "context_kb": 200,
+    "cost_tier": "free",
+    "vision": true,
+    "image_gen": false
+  },
+  "meta-llama/llama-3.3-70b-instruct:free": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "code",
+      "reasoning"
+    ],
+    "context_kb": 128,
+    "cost_tier": "free",
+    "vision": false,
+    "image_gen": false
+  },
+  "deepseek/deepseek-r1:free": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "reasoning",
+      "code",
+      "math"
+    ],
+    "context_kb": 64,
+    "cost_tier": "free",
+    "vision": false,
+    "image_gen": false
+  },
+  "deepseek/deepseek-chat-v3-0324:free": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "code",
+      "reasoning"
+    ],
+    "context_kb": 64,
+    "cost_tier": "free",
+    "vision": false,
+    "image_gen": false
+  },
+  "mistralai/mistral-7b-instruct:free": {
+    "provider": "openrouter",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "code"
+    ],
+    "context_kb": 32,
+    "cost_tier": "free",
+    "vision": false,
+    "image_gen": false
+  },
+  "perplexity/sonar": {
+    "provider": "voidai",
+    "modalities_in": [
+      "text"
+    ],
+    "modalities_out": [
+      "text"
+    ],
+    "capabilities": [
+      "web_search",
+      "reasoning"
+    ],
+    "context_kb": 128,
+    "cost_tier": "low",
+    "vision": false,
+    "image_gen": false,
+    "web_search": true
+  }
+}

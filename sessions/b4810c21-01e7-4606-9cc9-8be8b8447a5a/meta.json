@@ -1,0 +1,13 @@
+{
+  "session_id": "b4810c21-01e7-4606-9cc9-8be8b8447a5a",
+  "title": "T43 tasks",
+  "created_at": "2026-05-09T11:47:00.590953+00:00",
+  "workdir": "/storage/emulated/0/Цхранилище/Project/FavoriteCLI",
+  "leading_main_agent": "",
+  "agents": [],
+  "stats": {
+    "total_tokens": 0,
+    "requests": 0,
+    "start_time": "2026-05-09T11:47:00.590972+00:00"
+  }
+}

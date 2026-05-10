@@ -1,0 +1,13 @@
+{
+  "session_id": "00470771-71fb-4ba4-8ca2-6b4256426a3b",
+  "title": "T26a test",
+  "created_at": "2026-05-09T11:45:11.792069+00:00",
+  "workdir": "/storage/emulated/0/Цхранилище/Project/FavoriteCLI",
+  "leading_main_agent": "",
+  "agents": [],
+  "stats": {
+    "total_tokens": 0,
+    "requests": 0,
+    "start_time": "2026-05-09T11:45:11.792088+00:00"
+  }
+}

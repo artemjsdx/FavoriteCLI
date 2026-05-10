@@ -1,0 +1,39 @@
+# .favoriteignore — паттерны как .gitignore
+  # CLI и агенты не читают эти файлы/папки в WORKDIR
+
+  # Секреты и ключи
+  .env
+  .env.local
+  secrets/
+  *.key
+  *.pem
+
+  # Временные файлы
+  __pycache__/
+  *.pyc
+  *.pyo
+  .pytest_cache/
+  .mypy_cache/
+  *.egg-info/
+  dist/
+  build/
+
+  # Зависимости
+  node_modules/
+  venv/
+  .venv/
+  env/
+
+  # Системные
+  .DS_Store
+  Thumbs.db
+  *.swp
+  *.swo
+
+  # Большие файлы / медиа
+  *.mp4
+  *.mkv
+  *.iso
+  *.zip
+  *.tar.gz
+  

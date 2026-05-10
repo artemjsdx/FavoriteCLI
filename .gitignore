@@ -149,3 +149,5 @@ out_a_*.txt
 out_b_*.txt
 out_c_*.txt
 out_d_*.txt
+config/agents_config.json
+config/api_keys.json

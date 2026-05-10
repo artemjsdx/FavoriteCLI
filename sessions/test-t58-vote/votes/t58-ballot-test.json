@@ -1,0 +1,16 @@
+{
+  "vote_id": "t58-ballot-test",
+  "question": "Approve?",
+  "options": [
+    "yes",
+    "no"
+  ],
+  "created_at": "2026-01-01T00:00:00Z",
+  "agents": [
+    "main-1"
+  ],
+  "ballots": {
+    "main-1": "yes"
+  },
+  "status": "open"
+}

@@ -1,0 +1,29 @@
+prompt_toolkit==3.0.47
+  rich==13.9.4
+  requests==2.32.3
+  httpx==0.27.2
+  watchdog==4.0.1
+  python-dotenv==1.0.1
+  aiohttp==3.10.5
+  pyfiglet==1.0.2
+
+  # §44 — IDE mode (optional, enable when /ide is used)
+  # fastapi<0.100 uses pydantic v1 — no Rust/maturin needed on Termux.
+  # uvicorn (no [standard]) avoids watchfiles which also requires Rust.
+  fastapi>=0.95.0,<0.100.0
+  pydantic<2
+  uvicorn>=0.29
+
+  # §44.1 — Telegram bot interface (optional)
+  python-telegram-bot>=20.7
+
+  # §41 — OCR skill (optional)
+  # pytesseract>=0.3.10
+  # pillow>=10.0
+
+  # §41 — Markitdown skill (optional)
+  # markitdown>=0.0.1
+
+  # §41 — Internet/browser skill (optional)
+  # playwright>=1.44
+  

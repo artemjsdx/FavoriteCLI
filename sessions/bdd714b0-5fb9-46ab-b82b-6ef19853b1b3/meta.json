@@ -1,0 +1,13 @@
+{
+  "session_id": "bdd714b0-5fb9-46ab-b82b-6ef19853b1b3",
+  "title": "T39 stats",
+  "created_at": "2026-05-10T00:19:21.126269+00:00",
+  "workdir": "/storage/emulated/0/Цхранилище/Project/FavoriteCLI",
+  "leading_main_agent": "",
+  "agents": [],
+  "stats": {
+    "total_tokens": 350,
+    "requests": 2,
+    "start_time": "2026-05-10T00:19:21.126288+00:00"
+  }
+}

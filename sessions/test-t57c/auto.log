@@ -1,0 +1,40 @@
+[11:20:52] START: max_steps=5, max_duration=36000s
+[11:20:52] Initial message: Start T57c task
+[11:20:52] STEP 1: sending to agent
+[11:20:52] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[11:20:52] STEP 1: no NEXT found, injecting continuity prompt
+[11:20:52] STEP 2: sending to agent
+[11:20:52] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[11:20:52] STOP: DONE at step 2
+[11:23:55] START: max_steps=5, max_duration=36000s
+[11:23:55] Initial message: Start T57c task
+[11:23:55] STEP 1: sending to agent
+[11:23:55] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[11:23:55] STEP 1: no NEXT found, injecting continuity prompt
+[11:23:55] STEP 2: sending to agent
+[11:23:55] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[11:23:55] STOP: DONE at step 2
+[14:39:34] START: max_steps=5, max_duration=36000s
+[14:39:34] Initial message: Start T57c task
+[14:39:34] STEP 1: sending to agent
+[14:39:34] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[14:39:34] STEP 1: no NEXT found, injecting continuity prompt
+[14:39:34] STEP 2: sending to agent
+[14:39:34] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[14:39:34] STOP: DONE at step 2
+[14:47:01] START: max_steps=5, max_duration=36000s
+[14:47:01] Initial message: Start T57c task
+[14:47:01] STEP 1: sending to agent
+[14:47:01] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[14:47:01] STEP 1: no NEXT found, injecting continuity prompt
+[14:47:01] STEP 2: sending to agent
+[14:47:01] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[14:47:01] STOP: DONE at step 2
+[14:48:32] START: max_steps=5, max_duration=36000s
+[14:48:32] Initial message: Start T57c task
+[14:48:32] STEP 1: sending to agent
+[14:48:32] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[14:48:32] STEP 1: no NEXT found, injecting continuity prompt
+[14:48:32] STEP 2: sending to agent
+[14:48:32] EXECUTE ERROR: t_auto_loop_run_stops_on_done.<locals>.execute_tags() takes 1 positional argument but 2 were given
+[14:48:32] STOP: DONE at step 2

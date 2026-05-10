@@ -1,0 +1,9 @@
+{
+  "snapshots_dir": null,
+  "agent_memory_dir": null,
+  "telegram_log_dir": null,
+  "favorite_md_path": "./Favorite.md",
+  "snapshot_interval_min": 5,
+  "snapshot_keep_last_n": null,
+  "_comment": "null = use default sessions/<id>/ paths. Set to absolute path to override."
+}

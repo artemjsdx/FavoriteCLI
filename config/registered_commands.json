@@ -1,0 +1,16 @@
+{
+    "commands": {
+      "git-status": "git status --short",
+      "git-log": "git log --oneline -10",
+      "git-diff": "git diff HEAD",
+      "ls": "ls -la",
+      "tree": "find . -not -path './.git/*' -not -path './__pycache__/*' -not -path './sessions/*' | head -60",
+      "run-tests": "python -m pytest -x -q",
+      "pip-list": "pip list --format=columns",
+      "disk-usage": "du -sh *",
+      "ps": "ps aux | head -20",
+      "cat-logs": "cat /tmp/favorite_debug.log 2>/dev/null | tail -50"
+    },
+    "description": "Registered commands callable by agent via <SHELL:cmd_name:extra_args> tag. Keys are command names, values are shell templates."
+  }
+  

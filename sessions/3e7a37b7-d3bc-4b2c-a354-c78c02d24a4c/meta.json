@@ -1,0 +1,13 @@
+{
+  "session_id": "3e7a37b7-d3bc-4b2c-a354-c78c02d24a4c",
+  "title": "Новая сессия",
+  "created_at": "2026-05-07T14:29:22.173485+00:00",
+  "workdir": "/storage/emulated/0/Цхранилище/Project/FavoriteCLI",
+  "leading_main_agent": "",
+  "agents": [],
+  "stats": {
+    "total_tokens": 0,
+    "requests": 0,
+    "start_time": "2026-05-07T14:29:22.173507+00:00"
+  }
+}
