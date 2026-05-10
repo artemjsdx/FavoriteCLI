@@ -38,6 +38,8 @@ def record(
     backend: str = "unknown",
     agent_id: str = "main",
     cost_usd: float = 0.0,
+    session_id: str = '',
+    provider: str = 'unknown',
 ) -> None:
     """Record a single API call usage."""
     ts = datetime.utcnow().isoformat()

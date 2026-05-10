@@ -17,3 +17,13 @@ def config_dir() -> Path:
 def resolve_workdir(path: str) -> str:
     p = Path(path).expanduser().resolve()
     return str(p) if p.is_dir() else os.getcwd()
+
+def get_workdir():
+    import os
+    return os.getcwd()
+
+def ensure_dir(path):
+    from pathlib import Path as _P
+    _p=_P(path)
+    _p.mkdir(parents=True,exist_ok=True)
+    return _p

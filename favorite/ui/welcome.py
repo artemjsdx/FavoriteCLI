@@ -78,3 +78,6 @@ def print_error(text: str) -> None:
 
 def print_info(text: str) -> None:
     console.print(text)
+
+def print_welcome(model_name='',workdir=''):
+    render_welcome(model_name or 'FavoriteCLI',workdir or '~')

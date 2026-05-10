@@ -171,3 +171,14 @@ def _clean(html: str) -> str:
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{2,}", "\n", text)
     return text.strip()
+
+class WebSearchSkill:
+    @property
+    def name(self): return 'WebSearch'
+    def run(self,q,cfg=None,ctx=None):
+        r=search(q,cfg) or []
+        return '\n'.join('- '+x.get('title','') for x in r) or 'No results.'
+    def search(self,q,cfg=None): return search(q,cfg)
+    def execute(self,q,cfg=None,ctx=None): return self.run(q,cfg,ctx)
+
+WebsearchSkill=WebSearchSkill
