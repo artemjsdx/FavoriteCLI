@@ -40,9 +40,7 @@ SKILLS = [
     ]),
     ("Sleep",          "Sleep",        "Отложенный запуск / ожидание",   True,  []),
     ("web_panel",      "web_panel",    "Веб-панель (FastAPI+WebSocket)",  False, []),
-    ("device_ctrl",    "device_ctrl",  "Управление Android через ADB",   False, [
-          ("_note", "Настройка ADB", "note", "Используй /device для настройки: IP, порт, Vision-модель"),
-      ]),
+    ("device_ctrl",    "device_ctrl",  "Управление Android через ADB",   False, []),
 ]
 
 _O  = "\033[38;2;255;140;0m"    # orange
@@ -187,31 +185,213 @@ def _edit_text(sid, disp, key, label, cfg):
         break
 
 
-def _settings_menu(idx: int, cfg) -> None:
-    sid, disp, desc, default_on, settings = SKILLS[idx]
-    if not settings:
+def _device_ctrl_settings_menu() -> None:
+    """Полноценное меню настройки device_ctrl (читает/пишет device_ctrl.json)."""
+    try:
+        from favorite.skills.device_ctrl import config as dcfg
+    except ImportError:
         _cls()
         _p()
-        _p(f"  {_GR}У скилла {_B}{disp}{_X}{_GR} нет настроек.{_X}")
+        _p(f"  {_R}Скилл device_ctrl не установлен.{_X}")
         _p()
         try:
             input("  → ")
         except (EOFError, KeyboardInterrupt):
             pass
         return
-    # Если все настройки — только note (информационные), показываем и выходим
-    if all(len(s) >= 3 and s[2] == "note" for s in settings):
+
+    while True:
+        c = dcfg.load()
+        devices = c.get("devices", [])
+        vision  = c.get("vision_model") or "не задана"
+        delay   = c.get("action_delay_ms", 500)
+        timeout = c.get("timeout_sec", 15)
+        quality = c.get("screenshot_quality", 80)
+
         _cls()
         _p()
-        _p(f"  {_B}{_O}{disp}{_X}  {_GR}›  настройки{_X}")
+        _p(f"  {_B}{_O}device_ctrl  ›  настройки{_X}")
         _p(_SEP)
         _p()
-        for s in settings:
-            _p(f"  {_O}ℹ  {s[1]}:{_X}")
-            _p(f"     {_GR}{s[3]}{_X}")
+
+        if not devices:
+            _p(f"  {_GR}1.{_X}  Устройства  {_GR}(нет){_X}")
+        else:
+            dev = devices[0]
+            _p(f"  {_GR}1.{_X}  Устройство  {_O}{dev.get('ip','?')}:{dev.get('port',5555)}{_X}  {_GR}[{dev.get('label','?')}]{_X}")
+            if len(devices) > 1:
+                _p(f"       {_GR}+{len(devices)-1} ещё · [d<N>] для удаления{_X}")
+        _p()
+        _p(f"  {_GR}2.{_X}  Добавить устройство")
+        _p()
+        _p(f"  {_GR}3.{_X}  Vision-модель  {_GR}:{_X} {_O}{vision}{_X}")
+        _p()
+        _p(f"  {_GR}4.{_X}  Задержка после действия  {_GR}:{_X} {_O}{delay} мс{_X}")
+        _p(f"  {_GR}5.{_X}  Таймаут ADB  {_GR}:{_X} {_O}{timeout} сек{_X}")
+        _p(f"  {_GR}6.{_X}  Качество скриншота  {_GR}:{_X} {_O}{quality}%{_X}")
+        _p()
+        if devices:
+            _p(f"  {_GR}7.{_X}  Проверить соединение")
             _p()
         _p(_SEP)
-        _p(f"  {_GR}Enter → назад{_X}")
+        _p(f"  {_GR}[d<N>]{_X} удалить устройство N  {_GR}[Enter]{_X} назад")
+        _p()
+
+        try:
+            raw = input("  → ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            break
+
+        if not raw or raw == "q":
+            break
+
+        elif raw == "1" and devices:
+            _cls()
+            _p()
+            _p(f"  {_B}{_O}Редактировать устройство{_X}")
+            _p(_SEP)
+            _p()
+            try:
+                ip    = input(f"  IP [{devices[0].get('ip','?')}]: ").strip() or devices[0].get("ip", "")
+                port  = input(f"  Порт [{devices[0].get('port',5555)}]: ").strip() or str(devices[0].get("port", 5555))
+                label = input(f"  Имя [{devices[0].get('label','phone')}]: ").strip() or devices[0].get("label", "phone")
+                devices[0].update({"ip": ip, "port": int(port), "label": label})
+                dcfg.save(c)
+                _p(f"  {_G}✓ Сохранено{_X}")
+                import time; time.sleep(0.8)
+            except (EOFError, KeyboardInterrupt, ValueError):
+                _p(f"  {_GR}Отменено{_X}")
+
+        elif raw == "2":
+            _cls()
+            _p()
+            _p(f"  {_B}{_O}Добавить устройство{_X}")
+            _p(_SEP)
+            _p()
+            _p(f"  {_GR}Включи WiFi-отладку на телефоне:{_X}")
+            _p(f"  {_GR}Настройки → Для разработчиков → Отладка по Wi-Fi{_X}")
+            _p()
+            try:
+                label = input("  Имя (напр. Samsung A52): ").strip()
+                ip    = input("  IP-адрес устройства: ").strip()
+                port  = input("  Порт [5555]: ").strip() or "5555"
+                if ip:
+                    new_dev = {
+                        "id": (label or ip).lower().replace(" ", "_"),
+                        "label": label or ip,
+                        "ip": ip,
+                        "port": int(port),
+                        "default": len(devices) == 0,
+                    }
+                    c.setdefault("devices", []).append(new_dev)
+                    dcfg.save(c)
+                    _p(f"  {_GR}Подключаюсь к {ip}:{port}...{_X}")
+                    try:
+                        from favorite.skills.device_ctrl.adb_client import AdbClient
+                        AdbClient.connect(ip, int(port))
+                        _p(f"  {_G}✓ Подключено!{_X}")
+                    except Exception as e:
+                        _p(f"  {_R}Не удалось: {e}{_X}")
+                        _p(f"  {_GR}Устройство сохранено, подключись позже через /device connect{_X}")
+                    import time; time.sleep(1.5)
+                else:
+                    _p(f"  {_GR}Отменено{_X}")
+                    import time; time.sleep(0.6)
+            except (EOFError, KeyboardInterrupt):
+                pass
+
+        elif raw == "3":
+            _cls()
+            _p()
+            _p(f"  {_B}{_O}Vision-модель{_X}")
+            _p(_SEP)
+            _p()
+            _p(f"  Текущая: {_O}{c.get('vision_model') or 'не задана'}{_X}")
+            _p()
+            _p(f"  {_GR}Рекомендуемые (OpenRouter):{_X}")
+            _p(f"  {_GR}  qwen/qwen2.5-vl-72b-instruct{_X}")
+            _p(f"  {_GR}  google/gemini-2.0-flash-001{_X}")
+            _p(f"  {_GR}  minimax/minimax-m2-01{_X}")
+            _p()
+            _p(f"  {_GR}Введи ID модели (Enter → назад, clear → сбросить):{_X}")
+            _p()
+            try:
+                model = input("  → ").strip()
+                if model.lower() == "clear":
+                    c["vision_model"] = None
+                    dcfg.save(c)
+                    _p(f"  {_G}✓ Сброшена{_X}")
+                    import time; time.sleep(0.8)
+                elif model:
+                    c["vision_model"] = model
+                    dcfg.save(c)
+                    _p(f"  {_G}✓ Сохранено: {model}{_X}")
+                    import time; time.sleep(0.8)
+            except (EOFError, KeyboardInterrupt):
+                pass
+
+        elif raw == "4":
+            try:
+                val = input(f"  Задержка мс [{delay}]: ").strip()
+                if val.isdigit():
+                    c["action_delay_ms"] = int(val)
+                    dcfg.save(c)
+            except (EOFError, KeyboardInterrupt):
+                pass
+
+        elif raw == "5":
+            try:
+                val = input(f"  Таймаут сек [{timeout}]: ").strip()
+                if val.isdigit():
+                    c["timeout_sec"] = int(val)
+                    dcfg.save(c)
+            except (EOFError, KeyboardInterrupt):
+                pass
+
+        elif raw == "6":
+            try:
+                val = input(f"  Качество 1-100 [{quality}]: ").strip()
+                if val.isdigit() and 1 <= int(val) <= 100:
+                    c["screenshot_quality"] = int(val)
+                    dcfg.save(c)
+            except (EOFError, KeyboardInterrupt):
+                pass
+
+        elif raw == "7" and devices:
+            _p(f"  {_GR}Проверяю соединение...{_X}")
+            try:
+                dev = dcfg.get_default_device(c)
+                serial = dcfg.device_serial(dev)
+                from favorite.skills.device_ctrl.adb_client import AdbClient
+                client = AdbClient(serial, c.get("timeout_sec", 15))
+                info = client.device_info()
+                _p(f"  {_G}✓ {info.get('model','?')} | Android {info.get('android','?')} | {info.get('resolution','?')}{_X}")
+            except Exception as e:
+                _p(f"  {_R}✗ {e}{_X}")
+            try:
+                input("  Enter → продолжить")
+            except (EOFError, KeyboardInterrupt):
+                pass
+
+        elif raw.startswith("d") and raw[1:].isdigit():
+            idx2 = int(raw[1:]) - 1
+            if 0 <= idx2 < len(devices):
+                removed = devices.pop(idx2)
+                dcfg.save(c)
+                _p(f"  {_G}✓ Удалено: {removed.get('label','?')}{_X}")
+                import time; time.sleep(0.7)
+
+
+def _settings_menu(idx: int, cfg) -> None:
+    sid, disp, desc, default_on, settings = SKILLS[idx]
+    # device_ctrl has its own config file — use dedicated menu
+    if sid == "device_ctrl":
+        _device_ctrl_settings_menu()
+        return
+    if not settings:
+        _cls()
+        _p()
+        _p(f"  {_GR}У скилла {_B}{disp}{_X}{_GR} нет настроек.{_X}")
         _p()
         try:
             input("  → ")
@@ -283,7 +463,6 @@ class SkillsCommand(ICommand):
                     sid = SKILLS[idx][0]
                     new_state = not cfg.skill_enabled(sid, SKILLS[idx][3])
                     cfg.set_skill_enabled(sid, new_state)
-                    # Sync runtime SkillRegistry (оно читает свой путь в skills.json)
                     try:
                         from favorite.skills.registry import SkillRegistry
                         SkillRegistry.set_enabled(sid, new_state)
