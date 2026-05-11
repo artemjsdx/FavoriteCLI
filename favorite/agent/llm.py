@@ -174,27 +174,36 @@ def call_llm(messages: list[dict], cfg) -> str:
           except Exception as _re:
               print(f"[LLM retry {_delay}s failed: {_re}]", file=sys.stderr, flush=True)
 
-  # --- FALLBACK ---
+  # --- FALLBACK CHAIN: OR → FavoriteAPI → error ---
+  # BUG FIX: or_key["model"] is explicitly None when key is a raw string,
+  # so use `or` instead of dict.get() default to handle None properly.
+  # BUG FIX 2: wrap OR fallback in try/except so FavoriteAPI is tried on rate-limit.
   or_key = cfg.default_openrouter_key()
   if or_key:
-      headers = {
-          "Authorization": f"Bearer {or_key['key']}",
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://github.com/animebyst07-stack/FavoriteCLI",
-          "X-Title": "FavoriteCLI",
-      }
-      body = {
-          "model": or_key.get("model", "qwen/qwen3-coder:free"),
-          "messages": messages,
-      }
-      r = req.post(
-          "https://openrouter.ai/api/v1/chat/completions",
-          headers=headers, json=body, timeout=120,
-      )
-      data = r.json()
-      if "error" in data:
-          raise RuntimeError(data["error"].get("message", str(data["error"])))
-      return strip_thinking_blocks(data["choices"][0]["message"]["content"])
+      try:
+          headers = {
+              "Authorization": f"Bearer {or_key['key']}",
+              "Content-Type": "application/json",
+              "HTTP-Referer": "https://github.com/animebyst07-stack/FavoriteCLI",
+              "X-Title": "FavoriteCLI",
+          }
+          body = {
+              "model": or_key.get("model") or "qwen/qwen3-coder:free",
+              "messages": messages,
+          }
+          r = req.post(
+              "https://openrouter.ai/api/v1/chat/completions",
+              headers=headers, json=body, timeout=120,
+          )
+          data = r.json()
+          if "error" in data:
+              import sys as _sys
+              _sys.stderr.write(f"[LLM OR fallback error: {data['error'].get('message','?')}] → trying FavoriteAPI\n")
+          else:
+              return strip_thinking_blocks(data["choices"][0]["message"]["content"])
+      except Exception as _or_fb_err:
+          import sys as _sys
+          _sys.stderr.write(f"[LLM OR fallback exception: {_or_fb_err}] → trying FavoriteAPI\n")
 
   fav = cfg.default_favorite_key()
   if fav:
