@@ -40,7 +40,9 @@ SKILLS = [
     ]),
     ("Sleep",          "Sleep",        "Отложенный запуск / ожидание",   True,  []),
     ("web_panel",      "web_panel",    "Веб-панель (FastAPI+WebSocket)",  False, []),
-    ("device_control", "device_ctrl",  "Управление Android через ADB",   False, []),
+    ("device_ctrl",    "device_ctrl",  "Управление Android через ADB",   False, [
+          ("_note", "Настройка ADB", "note", "Используй /device для настройки: IP, порт, Vision-модель"),
+      ]),
 ]
 
 _O  = "\033[38;2;255;140;0m"    # orange
@@ -197,6 +199,25 @@ def _settings_menu(idx: int, cfg) -> None:
         except (EOFError, KeyboardInterrupt):
             pass
         return
+    # Если все настройки — только note (информационные), показываем и выходим
+    if all(len(s) >= 3 and s[2] == "note" for s in settings):
+        _cls()
+        _p()
+        _p(f"  {_B}{_O}{disp}{_X}  {_GR}›  настройки{_X}")
+        _p(_SEP)
+        _p()
+        for s in settings:
+            _p(f"  {_O}ℹ  {s[1]}:{_X}")
+            _p(f"     {_GR}{s[3]}{_X}")
+            _p()
+        _p(_SEP)
+        _p(f"  {_GR}Enter → назад{_X}")
+        _p()
+        try:
+            input("  → ")
+        except (EOFError, KeyboardInterrupt):
+            pass
+        return
     while True:
         _cls()
         _p()
@@ -262,4 +283,10 @@ class SkillsCommand(ICommand):
                     sid = SKILLS[idx][0]
                     new_state = not cfg.skill_enabled(sid, SKILLS[idx][3])
                     cfg.set_skill_enabled(sid, new_state)
+                    # Sync runtime SkillRegistry (оно читает свой путь в skills.json)
+                    try:
+                        from favorite.skills.registry import SkillRegistry
+                        SkillRegistry.set_enabled(sid, new_state)
+                    except Exception:
+                        pass
                 continue
