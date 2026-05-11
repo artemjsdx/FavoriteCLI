@@ -4,7 +4,7 @@ favorite/skills/device_ctrl/config.py — загрузка/сохранение 
 import json
 from pathlib import Path
 
-_CONFIG_PATH = Path(__file__).resolve().parents[4] / "config" / "device_ctrl.json"
+_CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "device_ctrl.json"
 
 _DEFAULTS = {
     "enabled": False,
