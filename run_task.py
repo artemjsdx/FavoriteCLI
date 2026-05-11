@@ -23,8 +23,9 @@ TASK       = (CLI / TASK_FILE).read_text(encoding='utf-8')
 WRITE_RE  = re.compile(r'<WRITE_FILE:path=([^>]+)>(.*?)</WRITE_FILE>', re.DOTALL)
 STEP_RE   = re.compile(r'<STEP>(.*?)</STEP>', re.DOTALL)
 CONT_RE   = re.compile(r'<CONTINUE>(.*?)</CONTINUE>', re.DOTALL)
-SEARCH_RE = re.compile(r'<SKILL:name=websearch>(.*?)</SKILL>', re.DOTALL)
-FETCH_RE  = re.compile(r'<SKILL:name=fetch_url>(.*?)</SKILL>', re.DOTALL)
+SEARCH_RE      = re.compile(r'<SKILL:name=websearch>(.*?)</SKILL>', re.DOTALL)
+FETCH_RE       = re.compile(r'<SKILL:name=fetch_url>(.*?)</SKILL>', re.DOTALL)
+DEVICE_CTRL_RE = re.compile(r'<SKILL:name=device_ctrl>(.*?)</SKILL>', re.DOTALL)
 CMD_RE    = re.compile(r'<CMD>(.*?)</CMD>', re.DOTALL)
 BG_CMD_RE = re.compile(r'<CMD\s+bg=["\'\']?(\d+)["\'\']?>(.*?)</CMD>', re.DOTALL)
 SUB_AGENT_RE = re.compile(r'<SUB_AGENT:role=([^>\n]+)>(.*?)</SUB_AGENT>', re.DOTALL)
@@ -35,31 +36,35 @@ AUTO_SYS = '''
 Работай автономно. Ограничений по шагам НЕТ — работай до полного завершения задачи.
 
 ИНСТРУМЕНТЫ:
-  <CMD>команда</CMD>                         — выполнить shell-команду (60s timeout)
-  <CONFIRM_CMD>опасная_команда</CONFIRM_CMD>   — выполнить ОПАСНУЮ команду после того, как ты явно подтвердил намерение
-  <CMD bg="600">git clone ...</CMD>           — фоновый запуск (max N сек).
-      Агент НЕ ждёт, продолжает работу. Результат приходит как [BG RESULTS].
-      Если команда завершилась раньше — показывается elapsed time.
-      Используй для: git clone, gradle build, npm install, долгих операций.
-  <SKILL:name=websearch>запрос</SKILL>
-  <SKILL:name=fetch_url>https://...</SKILL>
-  <WRITE_FILE:path=путь>содержимое</WRITE_FILE>
+  <CMD>команда</CMD>                              — shell-команда (60s timeout)
+  <CONFIRM_CMD>опасная_команда</CONFIRM_CMD>      — опасная команда (явное подтверждение)
+  <CMD bg="600">долгая команда</CMD>              — фоновый запуск, результат придёт как [BG RESULTS]
+  <SKILL:name=websearch>запрос</SKILL>            — поиск в интернете
+  <SKILL:name=fetch_url>https://...</SKILL>       — загрузить URL
+  <SKILL:name=device_ctrl>ACTION[:arg=val]</SKILL> — управление Android-устройством (см. раздел DEVICE CONTROL)
+  <WRITE_FILE:path=путь>содержимое</WRITE_FILE>  — записать файл
+
+DEVICE CONTROL быстрая шпаргалка (подробнее в системном промпте выше):
+  apps | launch:pkg=... | screenshot | screenshot:q=вопрос
+  ui_dump | tap:x=N:y=N | tap_text:text=... | press:key=back
+  swipe:x1=...:y1=...:x2=...:y2=... | wait:ms=N | device_info
 
 ПЕТЛЯ-ДЕТЕКТОР (Overseer):
   Если одна и та же команда повторяется 3+ раз → предупреждение.
   При предупреждении: немедленно смени стратегию.
 
 Сигнал продолжения: <CONTINUE>что дальше</CONTINUE>
-  Сигнал завершения: финальное резюме без CONTINUE.
+Сигнал завершения: финальное резюме без CONTINUE.
 
   ПРИВЫЧКА ХОРОШЕГО РАЗРАБОТЧИКА:
     После каждого действия — убедись что оно сработало.
     Написал скрипт → запусти его. Запустил команду → посмотри вывод.
     Не переходи к следующему шагу пока не видел реальный вывод текущего.
-  === END AUTO MODE ===
+=== END AUTO MODE ===
 '''
 
 cfg_ref: list = [None]  # module-level cfg for process_skills sub-agent dispatch
+ctx_ref: list = [None]  # module-level ctx for process_skills device_ctrl dispatch
 
 def log(msg):
     s = str(msg)
@@ -256,6 +261,15 @@ def process_skills(resp: str) -> str:
         u = m.group(1).strip()
         log(f'  [fetch] {u[:60]}')
         parts.append(f'[fetch_url: {u}]\n{do_fetch(u)}')
+    for m in DEVICE_CTRL_RE.finditer(resp):
+        args_str = m.group(1).strip()
+        log(f'  [device_ctrl] {args_str[:80]}')
+        try:
+            from favorite.skills.device_ctrl import DeviceCtrlSkill
+            result = DeviceCtrlSkill().run(args_str, ctx=ctx_ref[0], cfg=None)
+        except Exception as e:
+            result = f'[device_ctrl ERROR] {e}'
+        parts.append(f'[device_ctrl: {args_str[:60]}]\n{result}')
     return '\n\n---\n\n'.join(parts)
 
 def write_files(resp: str) -> list[str]:
@@ -289,7 +303,8 @@ def check_unverified_claims(resp: str) -> str | None:
     has_tools = bool(
         CMD_RE.search(resp) or BG_CMD_RE.search(resp) or
         WRITE_RE.search(resp) or SEARCH_RE.search(resp) or FETCH_RE.search(resp) or
-        SUB_AGENT_RE.search(resp) or CONFIRM_CMD_RE.search(resp)
+        SUB_AGENT_RE.search(resp) or CONFIRM_CMD_RE.search(resp) or
+        DEVICE_CTRL_RE.search(resp)
     )
     if has_tools:
         return None  # Agent actually did something, no issue
@@ -316,6 +331,7 @@ def main():
     ctx = CommandContext(workdir=WORKDIR, session_id=sid,
         platform=detect_platform(), config=cfg, mgr=mgr, registry=None)
     ctx.auto_mode = True
+    ctx_ref[0] = ctx  # expose ctx to process_skills for device_ctrl
     base = build_system_prompt(cfg, WORKDIR, session_id=sid)
     messages = [
         {'role': 'system', 'content': base + AUTO_SYS},

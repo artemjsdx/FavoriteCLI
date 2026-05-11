@@ -96,9 +96,95 @@ def build_system_prompt(cfg=None, workdir: str = None, mode: str = "chat", sessi
     ]
 
     modules = _load_modules()
+    parts.append(_device_ctrl_block())
     parts.append(_time_and_state_block(mode, cfg, modules))
     parts.append(_active_team_block(active_agents, modules))
     return "\n".join(p for p in parts if p)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Device control context injection
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _device_ctrl_block() -> str:
+    """Inject Android device ADB context into system prompt if device_ctrl is enabled."""
+    try:
+        dc_cfg_file = _CONFIG_DIR / "device_ctrl.json"
+        if not dc_cfg_file.exists():
+            return ""
+        dc = json.loads(dc_cfg_file.read_text(encoding="utf-8"))
+        if not dc.get("enabled", False):
+            return ""
+        devices = dc.get("devices", [])
+        if not devices:
+            return ""
+    except Exception:
+        return ""
+
+    dev_lines = []
+    default_dev = None
+    for d in devices:
+        is_default = d.get("default", False)
+        serial = f"{d.get('ip', '?')}:{d.get('port', 5555)}"
+        label = d.get("label", d.get("id", "device"))
+        marker = "★ (default)" if is_default else " "
+        dev_lines.append(f"  {marker} {label} | serial={serial}")
+        if is_default:
+            default_dev = serial
+    devices_str = "\n".join(dev_lines)
+
+    return f"""
+## DEVICE CONTROL (ADB) — АКТИВНО
+
+У тебя есть ПРЯМОЙ доступ к Android-устройству через ADB.
+Используй это для любых задач связанных с телефоном — скриншоты, запуск приложений,
+нажатия, ввод текста, анализ экрана, список пакетов.
+
+### Подключённые устройства:
+{devices_str}
+
+### Как управлять устройством — SKILL-тег:
+  <SKILL:name=device_ctrl>ACTION[:arg=value...]</SKILL>
+
+### Все доступные действия:
+  apps                                    — список всех установленных пакетов
+  launch:pkg=com.package.name            — запустить приложение по пакету
+  screenshot                             — скриншот + vision-описание экрана
+  screenshot:q=что_искать                — скриншот + ответ на конкретный вопрос
+  ui_dump                                — XML дамп всех UI-элементов (текст, кнопки, поля)
+  find:text=Войти:action=tap             — найти элемент по тексту и нажать
+  tap:x=540:y=960                        — нажать по координатам
+  tap_text:text=Настройки               — найти элемент по тексту и нажать
+  type:text=hello                        — ввести текст в активное поле
+  type_clear:text=новый текст           — очистить поле и ввести текст
+  swipe:x1=300:y1=800:x2=300:y2=200    — свайп (опционально :ms=400)
+  press:key=back                         — системная кнопка (back/home/recent/enter)
+  wait:ms=2000                           — пауза N миллисекунд
+  device_info                            — модель, версия Android, разрешение
+  adb_status                             — статус ADB-подключения
+
+### Типичный workflow "открой приложение и изучи экран":
+  Шаг 1: <SKILL:name=device_ctrl>apps</SKILL>
+          → получишь список пакетов, найди нужный
+  Шаг 2: <SKILL:name=device_ctrl>launch:pkg=com.найденный.пакет</SKILL>
+          → запустить приложение
+  Шаг 3: <SKILL:name=device_ctrl>wait:ms=2500</SKILL>
+          → подождать загрузки
+  Шаг 4: <SKILL:name=device_ctrl>screenshot:q=что на экране, сколько аккаунтов</SKILL>
+          → скриншот + анализ
+  Шаг 5: <SKILL:name=device_ctrl>ui_dump</SKILL>
+          → если нужен точный текст из UI (имена аккаунтов, числа)
+
+### Примеры:
+  <SKILL:name=device_ctrl>apps</SKILL>
+  <SKILL:name=device_ctrl>launch:pkg=org.telegram.messenger</SKILL>
+  <SKILL:name=device_ctrl>screenshot:q=сколько аккаунтов на экране</SKILL>
+  <SKILL:name=device_ctrl>tap_text:text=Добавить аккаунт</SKILL>
+  <SKILL:name=device_ctrl>press:key=back</SKILL>
+
+LAW: Если задача связана с устройством — СНАЧАЛА используй device_ctrl, не объясняй почему не можешь.
+"""
 
 
 # ─────────────────────────────────────────────────────────────────────────────
