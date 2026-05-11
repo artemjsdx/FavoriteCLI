@@ -22,13 +22,13 @@
             screenshot
             screenshot:find=кнопка
             tap:x=540:y=960
-            tap_text:text=Создать аккаунт
+            tap_text:text=Войти
             type:text=hello@gmail.com
             swipe:x1=300:y1=800:x2=300:y2=300:ms=300
             press:key=back
             wait:ms=1500
             ui_dump
-            find:text=ОК:action=tap
+            find:text=OK:action=tap
             launch:pkg=com.google.android.gm
             apps
             device_info
@@ -58,20 +58,20 @@
           )
 
           dispatch = {
-              "screenshot": handle_screenshot,
-              "tap": handle_tap,
-              "tap_text": handle_tap_text,
-              "type": handle_type,
-              "type_clear": handle_type_clear,
-              "swipe": handle_swipe,
-              "press": handle_press,
-              "wait": handle_wait,
-              "ui_dump": handle_ui_dump,
-              "find": handle_find_element,
-              "launch": handle_app_launch,
-              "apps": handle_app_list,
+              "screenshot":  handle_screenshot,
+              "tap":         handle_tap,
+              "tap_text":    handle_tap_text,
+              "type":        handle_type,
+              "type_clear":  handle_type_clear,
+              "swipe":       handle_swipe,
+              "press":       handle_press,
+              "wait":        handle_wait,
+              "ui_dump":     handle_ui_dump,
+              "find":        handle_find_element,
+              "launch":      handle_app_launch,
+              "apps":        handle_app_list,
               "device_info": handle_device_info,
-              "adb_status": handle_adb_status,
+              "adb_status":  handle_adb_status,
           }
 
           handler = dispatch.get(action)

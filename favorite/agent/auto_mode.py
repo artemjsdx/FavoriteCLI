@@ -24,6 +24,9 @@ console = Console()
 
 _MSK = timezone(timedelta(hours=3))
 
+# Префиксы ошибок от _send() — не считать их за LLM-ответы в детекторе циклов
+_ERROR_PREFIXES = ("[AGENT ERROR]", "[LLM ERROR]", "[EXECUTE ERROR]", "Ошибка API:")
+
 
 class AutoLoopStats:
     """Live counters for the autonomous loop."""
@@ -60,6 +63,17 @@ class AutoLoopStats:
         return t
 
 
+def _is_error_reply(reply: str) -> bool:
+    """Проверяет, является ли ответ агента сообщением об ошибке (а не LLM-ответом)."""
+    if not reply:
+        return True
+    r = reply.strip()
+    for prefix in _ERROR_PREFIXES:
+        if r.startswith(prefix):
+            return True
+    return False
+
+
 class AutoLoop:
     """
     Main autonomous loop. Usage:
@@ -94,6 +108,9 @@ class AutoLoop:
         self._log_path.parent.mkdir(parents=True, exist_ok=True)
         self._modules     = self._load_modules()
         self._recent_hashes: list[int] = []
+        # Счётчик последовательных ошибок API (сброс при успешном ответе)
+        self._consecutive_errors: int = 0
+        self._max_consecutive_errors: int = 5
 
     def _load_modules(self) -> dict:
         f = self._workdir / "config" / "modules.json"
@@ -110,9 +127,12 @@ class AutoLoop:
             fh.write(f"[{ts}] {text}\n")
 
     def _detect_cycle(self, response: str) -> bool:
+        """Детектирует цикл только для настоящих LLM-ответов (не ошибок API)."""
         if not self._modules.get("cycle_detection", True):
             return False
-        threshold = self._modules.get("cycle_similarity_threshold_pct", 85) / 100.0
+        # Не считать ошибки API за цикл — они всегда одинаковые строки
+        if _is_error_reply(response):
+            return False
         h = hash(response[:200])
         count = sum(1 for rh in self._recent_hashes if rh == h)
         self._recent_hashes.append(h)
@@ -179,21 +199,45 @@ class AutoLoop:
                 except Exception as e:
                     self._log(f"SEND ERROR: {e}")
                     console.print(f"  [red]/auto ошибка отправки:[/red] {escape(str(e))}")
-                    time.sleep(3)
+                    self._consecutive_errors += 1
+                    if self._consecutive_errors >= self._max_consecutive_errors:
+                        console.print(f"  [bold red]/auto остановлен: {self._consecutive_errors} ошибок подряд.[/bold red]")
+                        self._log(f"STOP: {self._consecutive_errors} consecutive errors")
+                        return f"too_many_errors ({self._consecutive_errors})"
+                    backoff = min(2 ** self._consecutive_errors, 30)
+                    time.sleep(backoff)
                     continue
 
                 stats.total_tokens += tokens or 0
                 stats.last_response = reply
                 live.update(stats.status_line(self._mode_label))
 
-                # — Cycle detection —
+                # — Обработка ошибок API (reply == "[AGENT ERROR] ...") —
+                if _is_error_reply(reply):
+                    self._consecutive_errors += 1
+                    self._log(f"API ERROR reply #{self._consecutive_errors}: {reply[:120]}")
+                    console.print(f"  [red]/auto ошибка API (попытка {self._consecutive_errors}/{self._max_consecutive_errors}):[/red] {escape(reply[:100])}")
+                    if self._consecutive_errors >= self._max_consecutive_errors:
+                        console.print(f"  [bold red]/auto остановлен: слишком много ошибок API подряд. Проверь модель и ключ.[/bold red]")
+                        self._log(f"STOP: {self._consecutive_errors} consecutive API errors")
+                        return f"too_many_api_errors ({self._consecutive_errors})"
+                    backoff = min(2 ** self._consecutive_errors, 30)
+                    time.sleep(backoff)
+                    continue
+                else:
+                    # Успешный ответ — сбрасываем счётчик ошибок
+                    self._consecutive_errors = 0
+
+                # — Cycle detection (только для реальных LLM-ответов) —
                 if self._detect_cycle(reply):
                     console.print(
                         "  [bold yellow]⚠ Детектор циклов: агент зациклился. Инжектирую прерывание.[/bold yellow]"
                     )
                     self._log("CYCLE BREAK injected")
+                    # Очищаем хэши чтобы прерывание не вызвало ещё один цикл
+                    self._recent_hashes.clear()
                     msg = ("[SYSTEM] Обнаружен цикл. Ты повторяешь одно и то же. "
-                           "Сделай принципиально другой шаг или используй DONE.")
+                           "Сделай принципиально другой шаг или используй <DONE>.")
                     continue
 
                 # — Execute tags —
@@ -215,26 +259,22 @@ class AutoLoop:
                         break
                     continue
 
-                # — Check for NEXT tag —
+                # — Check for NEXT tag or DONE —
                 has_next = "[[NEXT]]" in reply or "<NEXT>" in reply or "[CONTINUE]" in (results or "")
-                if not has_next and "DONE" not in reply and "[STOP]" not in reply:
-                    # Continuity inspector: prod agent to continue
-                    self._log(f"STEP {stats.step}: no NEXT found, injecting continuity prompt")
-                    msg = (
-                        f"[SYSTEM AUTO-CONTINUE] Шаг {stats.step} завершён. "
-                        f"Продолжай выполнение задачи. Используй NEXT если хочешь ещё такт, "
-                        f"или DONE если задача полностью завершена.\n"
-                        f"[OUTPUT]\n{(results or '')[:2000]}"
-                    )
-                    continue
-
                 if "DONE" in reply or "[STOP]" in reply:
-                    self._log(f"STOP: DONE at step {stats.step}")
+                    self._log(f"STOP: DONE/STOP tag at step {stats.step}")
+                    console.print("  [bold #ff8c00]✓ /auto: агент завершил задачу (DONE)[/bold #ff8c00]")
                     return "done"
 
-                # Build next message
-                msg = f"[SYSTEM] Шаг {stats.step} выполнен.\n[OUTPUT]\n{(results or '')[:3000]}"
-                self._log(f"STEP {stats.step}: OK, tokens+={tokens}")
+                # — Build next message from results —
+                if results and results.strip():
+                    msg = f"[TOOL RESULTS]\n{results}"
+                elif has_next:
+                    msg = "Продолжай."
+                else:
+                    msg = "Продолжай. Если задача выполнена — используй <DONE>."
 
-        self._log(f"STOPPED at step {stats.step}")
+                time.sleep(0.3)  # небольшая пауза между шагами
+
+        self._log(f"STOP: stop_flag at step {stats.step}")
         return "stopped"
