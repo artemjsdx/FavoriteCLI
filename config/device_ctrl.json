@@ -1,0 +1,19 @@
+{
+  "enabled": false,
+  "devices": [
+    {
+      "id": "phone2",
+      "label": "Второй телефон",
+      "ip": "192.168.1.100",
+      "port": 5555,
+      "default": true
+    }
+  ],
+  "vision_model": null,
+  "vision_prompt_extra": "",
+  "screenshot_quality": 80,
+  "action_delay_ms": 500,
+  "timeout_sec": 15,
+  "save_screenshots": true,
+  "screenshots_dir": "sessions/{session_id}/device_screens/"
+}

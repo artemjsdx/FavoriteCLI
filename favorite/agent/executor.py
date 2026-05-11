@@ -49,6 +49,45 @@ def execute_tags_with_output(tags: list[ParsedTag], ctx: "CommandContext", cfg) 
           return f"[MCP_CALL {server}/{tool}]\n{result}"
       except Exception as e:
           return f"MCP_CALL ERROR: {e}"
+
+  def _handle_device_ctrl(tag: ParsedTag, ctx: "CommandContext", cfg) -> str | None:
+    """device_ctrl — ADB tag handler: SCREENSHOT, TAP, TAP_TEXT, TYPE, SWIPE, PRESS, WAIT, UI_DUMP, etc."""
+    name = tag.name.upper()
+    args = tag.args
+    body = (tag.body or "").strip() or None
+
+    # Map tag name → skill action string
+    action_map = {
+        "SCREENSHOT":   lambda: f"screenshot{':find=' + (args.get('find') or '') if args.get('find') else ''}",
+        "TAP":          lambda: f"tap:x={args.get('x', 0)}:y={args.get('y', 0)}",
+        "TAP_TEXT":     lambda: f"tap_text:text={args.get('text', '') or body or ''}",
+        "TYPE":         lambda: f"type:text={args.get('text', '') or body or ''}",
+        "TYPE_CLEAR":   lambda: f"type_clear:text={args.get('text', '') or body or ''}",
+        "SWIPE":        lambda: f"swipe:x1={args.get('x1',300)}:y1={args.get('y1',800)}:x2={args.get('x2',300)}:y2={args.get('y2',300)}:ms={args.get('ms',300)}",
+        "PRESS":        lambda: f"press:key={args.get('key', '') or body or 'back'}",
+        "WAIT":         lambda: f"wait:ms={args.get('ms', 1000)}",
+        "UI_DUMP":      lambda: "ui_dump",
+        "FIND_ELEMENT": lambda: f"find:text={args.get('text', '') or body or ''}:action={args.get('action', 'tap')}",
+        "APP_LAUNCH":   lambda: f"launch:pkg={args.get('pkg', '') or body or ''}",
+        "APP_LIST":     lambda: "apps",
+        "DEVICE_INFO":  lambda: "device_info",
+        "ADB_STATUS":   lambda: "adb_status",
+    }
+    builder = action_map.get(name)
+    if not builder:
+        return f"[device_ctrl: unknown tag {name}]"
+
+    skill_args = builder()
+    try:
+        from ..skills.registry import SkillRegistry
+        skill = SkillRegistry.get("device_ctrl")
+        if not skill:
+            return "[device_ctrl: скилл не загружен. Включи его через /skills]"
+        return skill.run(skill_args, ctx, cfg)
+    except Exception as e:
+        return f"[device_ctrl ERROR] {e}"
+
+  
 def _dispatch(tag: ParsedTag, ctx: "CommandContext", cfg) -> str | None:
   name = tag.name.upper()
   if name == "STEP":              _handle_step(tag)
@@ -87,7 +126,11 @@ def _dispatch(tag: ParsedTag, ctx: "CommandContext", cfg) -> str | None:
   elif name == "ASK_PEER":        return _handle_ask_peer(tag, ctx, cfg)
   elif name == "DELEGATE_PEER":   return _handle_delegate_peer(tag, ctx, cfg)
   elif name == "NOTIFY_PEER":     return _handle_notify_peer(tag, ctx)
-  elif name == "MCP_CALL":        return _handle_mcp_call(tag, ctx, cfg)
+  elif name in ("SCREENSHOT", "TAP", "TAP_TEXT", "TYPE", "TYPE_CLEAR",
+                      "SWIPE", "PRESS", "WAIT", "UI_DUMP", "FIND_ELEMENT",
+                      "APP_LAUNCH", "APP_LIST", "DEVICE_INFO", "ADB_STATUS"):
+                                      return _handle_device_ctrl(tag, ctx, cfg)
+    elif name == "MCP_CALL":        return _handle_mcp_call(tag, ctx, cfg)
   elif name == "REINCARNATE":     return _handle_reincarnate(tag, ctx)
   elif name == "IMAGE":           return _handle_image(tag, ctx, cfg)
   elif name == "ASK_USER_CHOICE":    return _handle_ask_user_choice(tag)
