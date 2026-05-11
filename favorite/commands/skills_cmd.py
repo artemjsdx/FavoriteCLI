@@ -265,17 +265,52 @@ def _device_ctrl_settings_menu() -> None:
         elif raw == "2":
             _cls()
             _p()
-            _p(f"  {_B}{_O}Добавить устройство{_X}")
+            _p(f"  {_B}{_O}Добавить устройство  ›  инструкция{_X}")
             _p(_SEP)
             _p()
-            _p(f"  {_GR}Включи WiFi-отладку на телефоне:{_X}")
-            _p(f"  {_GR}Настройки → Для разработчиков → Отладка по Wi-Fi{_X}")
+            _p(f"  {_B}Шаг 1 — включи WiFi-отладку на телефоне:{_X}")
+            _p(f"  {_GR}  Android 11+  : Настройки → Для разработчиков → Беспроводная отладка{_X}")
+            _p(f"  {_GR}  Android 10-  : Настройки → Для разработчиков → Отладка по ADB (USB){_X}")
+            _p(f"  {_GR}  Если раздела нет: Настройки → О телефоне → тапни Номер сборки 7 раз{_X}")
+            _p()
+            _p(f"  {_B}Шаг 2 — найди IP телефона:{_X}")
+            _p(f"  {_GR}  Настройки → Wi-Fi → нажми на свою сеть → IP-адрес{_X}")
+            _p(f"  {_GR}  или:  Настройки → О телефоне → Статус → IP-адрес{_X}")
+            _p()
+            # Пробуем автоматически найти IP в локальной сети
+            import subprocess as _sp
+            _candidates = []
+            try:
+                _r = _sp.run(["ip", "route"], capture_output=True, text=True, timeout=3)
+                for _line in _r.stdout.splitlines():
+                    if "src" in _line:
+                        _parts = _line.split()
+                        _src_idx = _parts.index("src") if "src" in _parts else -1
+                        if _src_idx != -1 and _src_idx + 1 < len(_parts):
+                            _my_ip = _parts[_src_idx + 1]
+                            # Предлагаем диапазон сети
+                            _prefix = ".".join(_my_ip.split(".")[:3])
+                            if _prefix not in [".".join(c.split(".")[:3]) for c in _candidates]:
+                                _candidates.append(_prefix)
+            except Exception:
+                pass
+            if _candidates:
+                _p(f"  {_B}Твоя сеть:{_X} {_O}{_candidates[0]}.???{_X}  {_GR}← IP телефона будет примерно таким{_X}")
+                _p()
+            _p(_SEP)
             _p()
             try:
-                label = input("  Имя (напр. Samsung A52): ").strip()
-                ip    = input("  IP-адрес устройства: ").strip()
-                port  = input("  Порт [5555]: ").strip() or "5555"
-                if ip:
+                label = input("  Имя устройства (напр. iQOO Z10): ").strip()
+                _p()
+                _p(f"  {_GR}Введи IP-адрес телефона{' (из сети ' + _candidates[0] + '.???)' if _candidates else ''}:{_X}")
+                ip = input("  IP → ").strip()
+                if not ip:
+                    _p(f"  {_GR}Отменено{_X}")
+                    import time; time.sleep(0.6)
+                else:
+                    _p()
+                    _p(f"  {_GR}Порт по умолчанию 5555 (Enter → оставить):{_X}")
+                    port = input("  Порт → ").strip() or "5555"
                     new_dev = {
                         "id": (label or ip).lower().replace(" ", "_"),
                         "label": label or ip,
@@ -285,18 +320,23 @@ def _device_ctrl_settings_menu() -> None:
                     }
                     c.setdefault("devices", []).append(new_dev)
                     dcfg.save(c)
+                    _p()
                     _p(f"  {_GR}Подключаюсь к {ip}:{port}...{_X}")
                     try:
                         from favorite.skills.device_ctrl.adb_client import AdbClient
                         AdbClient.connect(ip, int(port))
-                        _p(f"  {_G}✓ Подключено!{_X}")
+                        _p(f"  {_G}✓ Подключено! Устройство добавлено.{_X}")
                     except Exception as e:
-                        _p(f"  {_R}Не удалось: {e}{_X}")
-                        _p(f"  {_GR}Устройство сохранено, подключись позже через /device connect{_X}")
-                    import time; time.sleep(1.5)
-                else:
-                    _p(f"  {_GR}Отменено{_X}")
-                    import time; time.sleep(0.6)
+                        _p(f"  {_R}Не удалось подключиться: {e}{_X}")
+                        _p()
+                        _p(f"  {_GR}Возможные причины:{_X}")
+                        _p(f"  {_GR}  · WiFi-отладка не включена на телефоне{_X}")
+                        _p(f"  {_GR}  · Телефон и Termux в разных сетях{_X}")
+                        _p(f"  {_GR}  · Неверный IP (проверь в настройках Wi-Fi){_X}")
+                        _p(f"  {_GR}  · Firewall блокирует порт 5555{_X}")
+                        _p()
+                        _p(f"  {_GR}Устройство сохранено. Попробуй позже: /device connect {ip}{_X}")
+                    import time; time.sleep(2)
             except (EOFError, KeyboardInterrupt):
                 pass
 
