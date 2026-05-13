@@ -12,7 +12,7 @@ from rich.markdown import Markdown
 from .platform import detect_platform
 from .config.loader import get_config, reload_config
 from .ui.welcome import render_welcome, clear_screen
-from .ui.chat import print_agent_message, print_separator, print_status_line
+from .ui.chat import print_agent_message, print_separator, print_status_line, reset_cmd_display
 from .ui.prompt import build_session, get_prompt_tokens
 from .ui.theme import STYLE
 from .sessions.manager import SessionManager
@@ -61,6 +61,7 @@ from .commands.model_router_cmd import ModelRouterCommand
 from .commands.parallel_auto_cmd import ParallelAutoCommand
 from .commands.subs_cmd import SubsCommand
 from .commands.mcp_cmd import McpCommand
+from .commands.mode_cmd import ModeCommand, LiteCommand, ProCommand, MaxCommand
 from .skills.telegram_notify import TelegramNotifier
 from .commands.base import CommandContext
 from .agent.system_prompt import build_system_prompt
@@ -144,6 +145,10 @@ def _build_registry() -> CommandRegistry:
   reg.register(BuildCommand())
   reg.register(AutoCommand())
   reg.register(SilentCommand())
+  reg.register(ModeCommand())
+  reg.register(LiteCommand())
+  reg.register(ProCommand())
+  reg.register(MaxCommand())
   # Skills
   reg.register(SkillsCommand())
   reg.register(SkillSearchCommand())
@@ -431,16 +436,31 @@ def run() -> None:
   _show_home(workdir, mgr=mgr, session_id=session_id)
   _check_onboarding(workdir)
 
+  _MODE_COLORS = {"lite": "#4a9eff", "pro": "#ff8c00", "max": "#ff3333"}
+  _MODE_LABELS = {"lite": "LITE", "pro": "PRO", "max": "MAX"}
+
   def _current_prompt():
+      import json as _json
       auto = getattr(ctx, "auto_mode", False)
       plan = getattr(ctx, "plan_mode", False)
+
+      # read current mode
+      try:
+          _mf = Path(__file__).resolve().parent.parent / "config" / "mode.json"
+          _mode = _json.loads(_mf.read_text(encoding="utf-8")).get("mode", "pro") if _mf.exists() else "pro"
+      except Exception:
+          _mode = "pro"
+      _color = _MODE_COLORS.get(_mode, "#ff8c00")
+      _label = _MODE_LABELS.get(_mode, "PRO")
+      _mode_token = (f"fg:{_color} bold", f"[{_label}] ")
+
       if auto and plan:
-          return [("fg:#ff8c00 bold", "[AUTO+ПЛАН] "), ("class:prompt-arrow", "❯ ")]
+          return [_mode_token, ("fg:#ff8c00 bold", "[AUTO+ПЛАН] "), ("class:prompt-arrow", "❯ ")]
       if auto:
-          return [("fg:#ff8c00 bold", "[AUTO] "), ("class:prompt-arrow", "❯ ")]
+          return [_mode_token, ("fg:#ff8c00 bold", "[AUTO] "), ("class:prompt-arrow", "❯ ")]
       if plan:
-          return [("fg:#ff8c00 bold", "[ПЛАН] "), ("class:prompt-arrow", "❯ ")]
-      return get_prompt_tokens()
+          return [_mode_token, ("fg:#ff8c00 bold", "[ПЛАН] "), ("class:prompt-arrow", "❯ ")]
+      return [_mode_token, ("class:prompt-arrow", "❯ ")]
 
   # §39.2 — Ctrl+S saves draft via key binding on PromptSession
   try:
