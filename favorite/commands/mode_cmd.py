@@ -101,6 +101,18 @@ def _set_mode(mode_id: str) -> None:
     _save_modules(data)
 
 
+def _announce_mode(mode_id: str) -> None:
+    m = MODES[mode_id]
+    console.print()
+    console.print(Panel(
+        f"[bold {m['color']}]{m['icon']} {m['display']}[/bold {m['color']}]\n\n{m['description']}",
+        title="[bold]Режим переключён[/bold]",
+        border_style=m["color"],
+        padding=(0, 2),
+    ))
+    console.print()
+
+
 class ModeCommand(ICommand):
     name = "/mode"
     description = "Переключить режим агента: lite | pro | max"
@@ -127,19 +139,7 @@ class ModeCommand(ICommand):
             return
 
         _set_mode(arg)
-        m = MODES[arg]
-        console.print()
-        console.print(Panel(
-            f"[bold {m['color']}]{m['icon']} {m['display']}[/bold {m['color']}]\n\n{m['description']}",
-            title="[bold]Режим переключён[/bold]",
-            border_style=m["color"],
-            padding=(0, 2),
-        ))
-        console.print()
-        for k, v in MODES[arg]["modules"].items():
-            if k != "agent_mode":
-                console.print(f"  [dim]  {k}: [bold]{v}[/bold][/dim]")
-        console.print()
+        _announce_mode(arg)
 
     def _show_status(self, current: str) -> None:
         table = Table(show_header=True, header_style="bold #ff8c00", box=None, padding=(0, 2))
@@ -164,4 +164,40 @@ class ModeCommand(ICommand):
         console.print(table)
         console.print()
         console.print("  [dim]Переключить: /mode lite | /mode pro | /mode max[/dim]")
+        console.print("  [dim]Или быстро: /lite | /pro | /max[/dim]")
         console.print()
+
+
+class _ModeShortcut(ICommand):
+    """Базовый класс для быстрых /lite /pro /max команд."""
+    _mode_id: str = ""
+    priority = 5
+
+    def execute(self, args: str, ctx: CommandContext) -> None:
+        current = _get_current_mode()
+        if self._mode_id == current:
+            m = MODES[self._mode_id]
+            console.print(
+                f"  [dim]Уже в режиме [{m['color']}]{m['icon']} {m['display']}[/{m['color']}][/dim]"
+            )
+            return
+        _set_mode(self._mode_id)
+        _announce_mode(self._mode_id)
+
+
+class LiteCommand(_ModeShortcut):
+    name = "/lite"
+    description = "Переключить в режим Lite (осторожный)"
+    _mode_id = "lite"
+
+
+class ProCommand(_ModeShortcut):
+    name = "/pro"
+    description = "Переключить в режим Pro (сбалансированный)"
+    _mode_id = "pro"
+
+
+class MaxCommand(_ModeShortcut):
+    name = "/max"
+    description = "Переключить в режим Max (максимальная автономия)"
+    _mode_id = "max"
