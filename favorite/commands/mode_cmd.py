@@ -20,12 +20,12 @@ MODES = {
         "display": "Lite",
         "color": "#4a9eff",
         "icon": "◆",
-        "description": "Осторожный. Уточняет перед каждым действием. Для важных данных.",
+        "description": "Быстро и коротко. Минимум рассуждений. Минимум токенов. Сразу к делу.",
         "modules": {
-            "action_bias_mode":         "cautious",
-            "verifier_mode":            "auto",
-            "context_compaction_mode":  "manual",
-            "auto_checkpoint_interval": 3,
+            "action_bias_mode":         "fast",
+            "verifier_mode":            "off",
+            "context_compaction_mode":  "aggressive",
+            "auto_checkpoint_interval": 5,
             "max_sub_agent_depth":      1,
             "auto_parallelism_mode":    "unified",
             "shell_output_limit":       "fixed",
@@ -36,7 +36,7 @@ MODES = {
         "display": "Pro",
         "color": "#ff8c00",
         "icon": "◈",
-        "description": "Сбалансированный. Действует сам, уточняет только перед деструктивным.",
+        "description": "Баланс скорости и глубины. Рассуждает там где нужно, не тормозит где не нужно.",
         "modules": {
             "action_bias_mode":         "balanced",
             "verifier_mode":            "tag",
@@ -52,11 +52,11 @@ MODES = {
         "display": "Max",
         "color": "#ff3333",
         "icon": "◉",
-        "description": "Максимальная автономия. Никогда не сдаётся. Исследует среду, ставит пакеты, параллельные субагенты.",
+        "description": "Глубокий анализ. Тщательное рассуждение. Берёт время — даёт точный результат.",
         "modules": {
-            "action_bias_mode":         "aggressive",
-            "verifier_mode":            "off",
-            "context_compaction_mode":  "aggressive",
+            "action_bias_mode":         "thorough",
+            "verifier_mode":            "deep",
+            "context_compaction_mode":  "manual",
             "auto_checkpoint_interval": 20,
             "max_sub_agent_depth":      5,
             "auto_parallelism_mode":    "independent",
@@ -187,17 +187,17 @@ class _ModeShortcut(ICommand):
 
 class LiteCommand(_ModeShortcut):
     name = "/lite"
-    description = "Переключить в режим Lite (осторожный)"
+    description = "Переключить в режим Lite (быстро, минимум рассуждений)"
     _mode_id = "lite"
 
 
 class ProCommand(_ModeShortcut):
     name = "/pro"
-    description = "Переключить в режим Pro (сбалансированный)"
+    description = "Переключить в режим Pro (баланс скорости и глубины)"
     _mode_id = "pro"
 
 
 class MaxCommand(_ModeShortcut):
     name = "/max"
-    description = "Переключить в режим Max (максимальная автономия)"
+    description = "Переключить в режим Max (глубокий анализ, тщательный результат)"
     _mode_id = "max"
