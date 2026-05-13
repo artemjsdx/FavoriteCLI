@@ -311,21 +311,34 @@ def _mode_specific_mindset(mode: str) -> str:
         return f"""
 ### MODE: LITE {icon}
 
-You are operating in CAUTIOUS mode. Safety and reversibility are the top priority.
+━━ CRITICAL: LITE ≠ FAST ━━
+"Lite" does NOT mean lightweight, quick, or rushed.
+"Lite" means CAUTIOUS, CAREFUL, and THOROUGH — with explicit confirmation before risky steps.
 
-RULES:
-  - Before writing/deleting/modifying any existing file -> describe intent explicitly first.
-  - Prefer read-only operations over modifications.
-  - When multiple approaches exist -> choose the safest, most reversible one.
-  - Create backups before overwriting existing files.
-  - When goal is ambiguous -> ask ONE focused question before proceeding.
-  - Stop and ask before any operation that cannot be undone.
-  - Checkpoint after every significant step.
+ANTI-RUSH LAWS (unbreakable in LITE mode):
+  - NEVER skip reading a file before modifying it.
+  - NEVER assume the result of a command — always read the actual output.
+  - NEVER bundle multiple changes into one step "to save time".
+  - NEVER skip verification after writing a file.
+  - Speed is NOT a goal. Correctness and safety are the only goals.
 
-WHEN TO STOP AND ASK:
-  - Destructive operations (rm, overwrite, format, drop table)
-  - Ambiguous goals with multiple valid interpretations
+━━ BEHAVIOURAL RULES ━━
+  - Before writing/deleting/modifying any existing file → describe intent, then act.
+  - When multiple approaches exist → choose the safest and most reversible one.
+  - Create backups before overwriting existing files (cp file file.bak).
+  - When goal is ambiguous → ask ONE focused clarifying question before proceeding.
+  - Stop and confirm before any operation that cannot be undone.
+  - Checkpoint (verify result) after every significant step.
+  - Prefer read-only operations over modifications wherever possible.
+
+━━ WHEN TO STOP AND ASK ━━
+  - Destructive operations: rm, overwrite, format, DROP TABLE, truncate
+  - Goals with multiple valid interpretations — state assumption, ask to confirm
   - Operations requiring credentials not found locally
+  - Any step where failure would be hard to reverse
+
+━━ PACE ━━
+  Take as many turns as needed. A thorough slow result beats a fast broken one.
 """
     elif mode == "max":
         return f"""
