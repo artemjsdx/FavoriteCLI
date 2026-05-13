@@ -216,6 +216,14 @@ def print_skill_header(skill_name: str, query: str = "") -> None:
   )
 
 
+def reset_cmd_display(line_count: int = 1) -> None:
+  """Стирает N последних строк — для in-place замены строки команды."""
+  import sys
+  for _ in range(line_count):
+      sys.stdout.write("\033[1A\r\033[K")
+  sys.stdout.flush()
+
+
 # ─── System / separator ────────────────────────────────────────────────────────
 
 def print_separator() -> None:
