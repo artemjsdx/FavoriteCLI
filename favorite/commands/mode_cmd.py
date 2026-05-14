@@ -102,15 +102,14 @@ def _set_mode(mode_id: str) -> None:
 
 
 def _announce_mode(mode_id: str) -> None:
-    m = MODES[mode_id]
-    console.print()
-    console.print(Panel(
-        f"[bold {m['color']}]{m['icon']} {m['display']}[/bold {m['color']}]\n\n{m['description']}",
-        title="[bold]Режим переключён[/bold]",
-        border_style=m["color"],
-        padding=(0, 2),
-    ))
-    console.print()
+      m = MODES[mode_id]
+      c = m["color"]
+      console.print()
+      console.print(f"  [{c}]│[/{c}] [bold {c}]{m['icon']} {m['display'].upper()}[/bold {c}]")
+      console.print(f"  [{c}]│[/{c}]")
+      console.print(f"  [{c}]│[/{c}]  [dim #aaaaaa]{m['description']}[/dim #aaaaaa]")
+      console.print(f"  [{c}]│[/{c}]")
+      console.print()
 
 
 class ModeCommand(ICommand):

@@ -152,24 +152,27 @@ def call_llm(messages: list[dict], cfg) -> str:
   except Exception as _llm_err:
       import sys, time as _time
       print(f"[LLM primary error: {_llm_err}]", file=sys.stderr, flush=True)
-      # FIX-6: при 429 rate limit — сразу fallback, без медленных retries
-      _is_429 = any(x in str(_llm_err).lower() for x in ("429", "rate limit", "quota", "too many"))
-      if not _is_429:
-          _time.sleep(2)
+      # Fix В: retry with exponential backoff before fallback
+      for _delay in (1, 2, 4):
+          _time.sleep(_delay)
           try:
               _rr = req.post(
                   "https://openrouter.ai/api/v1/chat/completions",
-                  headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
-                           "HTTP-Referer": "https://github.com/animebyst07-stack/FavoriteCLI", "X-Title": "FavoriteCLI"},
-                  json={"model": model_name, "messages": messages}, timeout=120,
+                  headers={
+                      "Authorization": f"Bearer {api_key}",
+                      "Content-Type": "application/json",
+                      "HTTP-Referer": "https://github.com/animebyst07-stack/FavoriteCLI",
+                      "X-Title": "FavoriteCLI",
+                  },
+                  json={"model": model_name, "messages": messages},
+                  timeout=120,
               )
               _rd = _rr.json()
               if "error" not in _rd:
+                  print(f"[LLM retry OK after {_delay}s]", file=sys.stderr, flush=True)
                   return strip_thinking_blocks(_rd["choices"][0]["message"]["content"])
           except Exception as _re:
-              print(f"[LLM single-retry failed: {_re}]", file=sys.stderr, flush=True)
-      else:
-          print(f"[LLM 429 detected — instant fallback to FavoriteAPI]", file=sys.stderr, flush=True)
+              print(f"[LLM retry {_delay}s failed: {_re}]", file=sys.stderr, flush=True)
 
   # --- FALLBACK CHAIN: OR → FavoriteAPI → error ---
   # BUG FIX: or_key["model"] is explicitly None when key is a raw string,
@@ -231,25 +234,14 @@ def stream_llm(messages: list[dict], cfg) -> Iterator[str]:
   if not or_key:
       raise RuntimeError("stream_llm: OpenRouter ключ не найден")
 
-  # FIX: RouterModule selects model from user_agents.json
-  try:
-      from .model_router import RouterModule as _RM
-      _msg = messages[-1]['content'] if messages else ''
-      _prov, _model, _rkey = _RM.select_model(_msg, cfg)
-      use_key = _rkey or or_key['key']
-      use_model = _model if _prov == 'OpenRouter' else (or_key.get('model') or 'qwen/qwen3-coder:free')
-  except Exception:
-      use_key = or_key['key']
-      use_model = or_key.get('model') or 'qwen/qwen3-coder:free'
-
   headers = {
-      "Authorization": f"Bearer {use_key}",
+      "Authorization": f"Bearer {or_key['key']}",
       "Content-Type": "application/json",
       "HTTP-Referer": "https://github.com/animebyst07-stack/FavoriteCLI",
       "X-Title": "FavoriteCLI",
   }
   body = {
-      "model": use_model,
+      "model": or_key.get("model", "qwen/qwen3-coder:free"),
       "messages": messages,
       "stream": True,
   }

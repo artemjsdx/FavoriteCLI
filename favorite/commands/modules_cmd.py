@@ -86,29 +86,19 @@ def _val_str(data: dict, key: str, default: Any) -> str:
 
 
 def _show_modules(data: dict) -> None:
-      console.print()
-      console.print(Panel(
-          Text("  MODULES", style="bold #ff8c00"),
-          subtitle="[dim]num — toggle | num=val — set | q — quit | ? — help[/dim]",
-          border_style="dim #ff8c00",
-          padding=(0, 1),
-      ))
-
-      table = Table(show_header=False, box=None, padding=(0, 1))
-      table.add_column("#",      style="dim", width=4)
-      table.add_column("Module",             width=36)
-      table.add_column("Value",              width=20)
-
-      current_section = None
-      for i, (key, name, section, typ, default, desc) in enumerate(_CATALOGUE, 1):
-          if section != current_section:
-              current_section = section
-              table.add_row("", f"[bold #555555]{escape(section)}[/bold #555555]", "")
-          val_str = _val_str(data, key, default)
-          table.add_row(f"[dim]{i}[/dim]", escape(name), val_str)
-
-      console.print(table)
-      console.print()
+        console.print()
+        console.print("  [bold #ff8c00]▸[/bold #ff8c00] [bold white]MODULES[/bold white]  [dim #333333]num — toggle  num=val — set  q — выйти  ? — help[/dim #333333]")
+        console.print()
+        current_section = None
+        for i, (key, name, section, typ, default, desc) in enumerate(_CATALOGUE, 1):
+            if section != current_section:
+                current_section = section
+                console.print(f"  [bold #3a3a3a]{escape(section)}[/bold #3a3a3a]")
+            val_str = _val_str(data, key, default)
+            num = f"[dim #555555]{i:>2}[/dim #555555]"
+            nm  = f"[dim #888888]{escape(name):<34}[/dim #888888]"
+            console.print(f"  {num} [dim #2a2a2a]·[/dim #2a2a2a] {nm}  {val_str}")
+        console.print()
 def cmd_modules(args: list[str], ctx, cfg) -> None:
     """
     /modules
