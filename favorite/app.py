@@ -388,6 +388,12 @@ def run() -> None:
       workdir=workdir, session_id=session_id, platform=platform,
       config=get_config(), mgr=mgr, registry=registry,
   )
+  # §PATCH-1: cache current mode on startup
+  try:
+      import json as _j; _mf2 = Path(__file__).resolve().parent.parent / "config" / "mode.json"
+      ctx.current_mode = _j.loads(_mf2.read_text(encoding="utf-8")).get("mode", "pro") if _mf2.exists() else "pro"
+  except Exception:
+      ctx.current_mode = "pro"
 
   def on_fav_md_change():
       console.print("\n● [dim]Favorite.md обновлён[/dim]")
@@ -440,16 +446,10 @@ def run() -> None:
   _MODE_LABELS = {"lite": "LITE", "pro": "PRO", "max": "MAX"}
 
   def _current_prompt():
-      import json as _json
       auto = getattr(ctx, "auto_mode", False)
       plan = getattr(ctx, "plan_mode", False)
-
-      # read current mode
-      try:
-          _mf = Path(__file__).resolve().parent.parent / "config" / "mode.json"
-          _mode = _json.loads(_mf.read_text(encoding="utf-8")).get("mode", "pro") if _mf.exists() else "pro"
-      except Exception:
-          _mode = "pro"
+      # §PATCH-1: read from ctx attribute, updated by mode_cmd
+      _mode = getattr(ctx, "current_mode", "pro")
       _color = _MODE_COLORS.get(_mode, "#ff8c00")
       _label = _MODE_LABELS.get(_mode, "PRO")
       _mode_token = (f"fg:{_color} bold", f"[{_label}] ")
