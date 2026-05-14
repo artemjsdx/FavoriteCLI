@@ -533,7 +533,7 @@ def run() -> None:
             if matched_cmd:
                 try: matched_cmd.execute(matched_args, ctx)
                 except Exception as e: console.print(f"[red]Ошибка команды: {e}[/red]")
-                _restore_chat(mgr, session_id, workdir)
+                _show_home(workdir, mgr=mgr, session_id=session_id)
             else: console.print(f"[dim]Команда не найдена: {raw}[/dim]")
           else:
               mgr.append_history(session_id, {"type": "user", "content": raw})
@@ -549,7 +549,10 @@ def run() -> None:
                   system_prompt = _load_system_prompt(cfg, ctx.workdir, session_id=session_id, mode=_mode)
                   send_text = ("[ПЛАН РЕЖИМ]\n" + raw) if getattr(ctx, "plan_mode", False) else raw
                   messages = _build_messages(send_text, history[:-1], system_prompt)
-                  _handle_chat(send_text, messages, ctx, mgr, session_id, cfg)
+                  try:
+                      _handle_chat(send_text, messages, ctx, mgr, session_id, cfg)
+                  except KeyboardInterrupt:
+                      console.print("\n[dim]● Агент остановлен (Ctrl+C)[/dim]")
   finally:
       watcher.stop(); watcher.join()
 
