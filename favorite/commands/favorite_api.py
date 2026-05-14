@@ -11,31 +11,36 @@ class FavoriteApiCommand(ICommand):
   def execute(self, args: str, ctx: CommandContext) -> None:
     cfg = ctx.config
     while True:
-        print_separator()
-        print_agent_message("FavoriteAPI — управление ключами", "system")
-        keys = cfg.favorite_api_keys
-        if not keys:
-            print_info("  Ключи не добавлены.")
-        else:
-            for i, k in enumerate(keys, 1):
-                key_str = k["key"]
-                masked = key_str[:8] + "..." + key_str[-4:] if len(key_str) > 14 else "***"
-                model   = k.get("model") or "(не задана — сервер выберет сам)"
-                role    = k.get("role") or "Не назначено"
-                default = " [дефолт]" if k.get("is_default") else ""
-                print_info(f"  [{i}] {masked}  |  модель: {model}  |  роль: {role}{default}")
-        print_separator()
-        print_info("  [1] Добавить ключ")
-        print_info("  [2] Удалить ключ")
-        print_info("  [3] Изменить адрес сервера")
-        bridge_status = "настроен" if cfg.has_tg_bridge() else "не настроен"
-        print_info(f"  [4] Telegram-мост  ({bridge_status})")
-        if keys:
-            print_info("  [5] Задать модель для ключа")
-        print_info(f"  [0] Назад  (сервер: {cfg.favorite_api_base_url})")
-        try:
-            choice = input("  Выбери: ").strip()
-        except (EOFError, KeyboardInterrupt):
+        from rich.console import Console as _Con
+          from rich.markup import escape as _esc
+          _con = _Con()
+          _ORANGE = "#ff8c00"; _DIM = "#555555"; _DIM2 = "#2a2a2a"
+          _W = 52
+          _con.print()
+          _con.print(f"[{_DIM2}]╭──[/{_DIM2}] [bold {_ORANGE}]◈ FAVORITE API[/bold {_ORANGE}] [dim {_DIM2}]{'─' * (_W - 16)}╮[/dim {_DIM2}]")
+          _con.print(f"[{_DIM2}]│[/{_DIM2}]")
+          keys = cfg.favorite_api_keys
+          if not keys:
+              _con.print(f"[{_DIM2}]│[/{_DIM2}]  [dim {_DIM}]ключи не добавлены[/dim {_DIM}]")
+          else:
+              for i, k in enumerate(keys, 1):
+                  key_str = k["key"]
+                  masked = key_str[:8] + "…" + key_str[-4:] if len(key_str) > 14 else "***"
+                  model   = _esc(k.get("model") or "—")
+                  default_mark = "  [bold #5fd7af]✓[/bold #5fd7af]" if k.get("is_default") else ""
+                  _con.print(f"[{_DIM2}]│[/{_DIM2}]  [dim {_DIM}]{i}.[/dim {_DIM}]  [white]{_esc(masked)}[/white]{default_mark}")
+                  _con.print(f"[{_DIM2}]│[/{_DIM2}]     [dim {_DIM}]model [dim #333333]·[/dim #333333] [{_ORANGE}]{model}[/{_ORANGE}][/dim {_DIM}]")
+          bridge_status = "настроен" if cfg.has_tg_bridge() else "не настроен"
+          _con.print(f"[{_DIM2}]│[/{_DIM2}]")
+          _con.print(f"[{_DIM2}]│[/{_DIM2}]  [dim {_DIM}]1.[/dim {_DIM}]  добавить ключ")
+          _con.print(f"[{_DIM2}]│[/{_DIM2}]  [dim {_DIM}]2.[/dim {_DIM}]  удалить ключ")
+          _con.print(f"[{_DIM2}]│[/{_DIM2}]  [dim {_DIM}]3.[/dim {_DIM}]  адрес сервера  [dim {_DIM}]({_esc(cfg.favorite_api_base_url)})[/dim {_DIM}]")
+          _con.print(f"[{_DIM2}]│[/{_DIM2}]  [dim {_DIM}]4.[/dim {_DIM}]  Telegram-мост  [dim {_DIM}]({bridge_status})[/dim {_DIM}]")
+          if keys:
+              _con.print(f"[{_DIM2}]│[/{_DIM2}]  [dim {_DIM}]5.[/dim {_DIM}]  задать модель")
+          _con.print(f"[{_DIM2}]│[/{_DIM2}]  [dim {_DIM}]0.[/dim {_DIM}]  [dim {_DIM}]назад[/dim {_DIM}]")
+          _con.print(f"[{_DIM2}]│[/{_DIM2}]")
+          _con.print(f"[{_DIM2}]╰{'─' * (_W + 2)}╯[/{_DIM2}]")
             break
         if choice == "0":
             break
