@@ -183,37 +183,44 @@ class StatusSpinner:
 
 # ─── Shell / tool execution ───────────────────────────────────────────────────
 
+
+_last_shell_cmd: str = ""
+
+
 def print_shell_cmd(cmd: str) -> None:
-    import sys as _sys
-    short = cmd.strip()
-    if len(short) > 90:
-        short = short[:87] + "..."
-    # §PATCH-3 no newline — output erases this line in-place
-    _sys.stdout.write("  > " + short + "\r")
-    _sys.stdout.flush()
+  global _last_shell_cmd
+  _last_shell_cmd = cmd.strip()
+  # silent: print_shell_output will show cmd+result together
+
 
 def print_shell_output(out: str, err: str, max_lines: int = 6) -> None:
-      import sys as _sys
-      # §PATCH-3 erase cmd line, no more spam
-      _sys.stdout.write("\033[2K\r")
-      _sys.stdout.flush()
-      out_lines = out.strip().splitlines() if out.strip() else []
-      err_lines = err.strip().splitlines() if err.strip() else []
-      all_lines: list[tuple[str, str]] = (
-          [(l, "out") for l in out_lines] + [(l, "err") for l in err_lines]
-      )
-      if not all_lines:
-          return
-      shown = all_lines[:max_lines]
-      for line, kind in shown:
-          text = escape(line[:130])
-          if kind == "err":
-              console.print(f"  [dim #995555]{text}[/dim #995555]")
-          else:
-              console.print(f"  [dim #666666]{text}[/dim #666666]")
-      extra = len(all_lines) - max_lines
-      if extra > 0:
-          console.print(f"  [dim #444444]... +{extra} lines[/dim #444444]")
+  global _last_shell_cmd
+  short = _last_shell_cmd
+  _last_shell_cmd = ""
+  if len(short) > 80:
+      short = short[:77] + "..."
+
+  out_lines = out.strip().splitlines() if out.strip() else []
+  err_lines = err.strip().splitlines() if err.strip() else []
+  all_lines: list[tuple[str, str]] = (
+      [(l, "out") for l in out_lines] + [(l, "err") for l in err_lines]
+  )
+
+  console.print(f"  [bold {ORANGE}]>[/bold {ORANGE}] [dim]{escape(short)}[/dim]")
+
+  if not all_lines:
+      return
+
+  shown = all_lines[:max_lines]
+  for line, kind in shown:
+      text = escape(line[:130])
+      if kind == "err":
+          console.print(f"  [dim #995555]{text}[/dim #995555]")
+      else:
+          console.print(f"  [dim #666666]{text}[/dim #666666]")
+  extra = len(all_lines) - max_lines
+  if extra > 0:
+      console.print(f"  [dim #444444]... +{extra} lines[/dim #444444]")
 def print_skill_header(skill_name: str, query: str = "") -> None:
   q_part = f" [dim #666666]{escape(query[:60])}[/dim #666666]" if query else ""
   console.print(
