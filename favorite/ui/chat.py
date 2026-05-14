@@ -193,34 +193,36 @@ def print_shell_cmd(cmd: str) -> None:
   # silent: print_shell_output will show cmd+result together
 
 
-def print_shell_output(out: str, err: str, max_lines: int = 6) -> None:
-  global _last_shell_cmd
-  short = _last_shell_cmd
-  _last_shell_cmd = ""
-  if len(short) > 80:
-      short = short[:77] + "..."
+def print_shell_output(out: str, err: str, max_lines: int = 3) -> None:
+    """Compact output — command line + max 3 lines, rest collapsed."""
+    global _last_shell_cmd
+    short = _last_shell_cmd
+    _last_shell_cmd = ""
+    if len(short) > 72:
+        short = short[:69] + "..."
 
-  out_lines = out.strip().splitlines() if out.strip() else []
-  err_lines = err.strip().splitlines() if err.strip() else []
-  all_lines: list[tuple[str, str]] = (
-      [(l, "out") for l in out_lines] + [(l, "err") for l in err_lines]
-  )
+    out_lines = out.strip().splitlines() if out.strip() else []
+    err_lines = err.strip().splitlines() if err.strip() else []
+    all_lines: list[tuple[str, str]] = (
+        [(l, "out") for l in out_lines] + [(l, "err") for l in err_lines]
+    )
 
-  console.print(f"  [bold {ORANGE}]>[/bold {ORANGE}] [dim]{escape(short)}[/dim]")
+    console.print(f"  [bold {ORANGE}]>[/bold {ORANGE}] [dim #555555]{escape(short)}[/dim #555555]")
 
-  if not all_lines:
-      return
+    if not all_lines:
+        return
 
-  shown = all_lines[:max_lines]
-  for line, kind in shown:
-      text = escape(line[:130])
-      if kind == "err":
-          console.print(f"  [dim #995555]{text}[/dim #995555]")
-      else:
-          console.print(f"  [dim #666666]{text}[/dim #666666]")
-  extra = len(all_lines) - max_lines
-  if extra > 0:
-      console.print(f"  [dim #444444]... +{extra} lines[/dim #444444]")
+    total = len(all_lines)
+    shown = all_lines[:max_lines]
+    for line, kind in shown:
+        text = escape(line[:120])
+        if kind == "err":
+            console.print(f"    [dim #884444]{text}[/dim #884444]")
+        else:
+            console.print(f"    [dim #555555]{text}[/dim #555555]")
+    extra = total - max_lines
+    if extra > 0:
+        console.print(f"    [dim #3a3a3a]… +{extra} lines[/dim #3a3a3a]")
 def print_skill_header(skill_name: str, query: str = "") -> None:
   q_part = f" [dim #666666]{escape(query[:60])}[/dim #666666]" if query else ""
   console.print(

@@ -184,6 +184,10 @@ def _device_ctrl_block() -> str:
   <SKILL:name=device_ctrl>press:key=back</SKILL>
 
 LAW: Если задача связана с устройством — СНАЧАЛА используй device_ctrl, не объясняй почему не можешь.
+
+  CRITICAL: НЕ запускай adb_status, screenshot или любые device_ctrl теги проактивно.
+  Используй device_ctrl ТОЛЬКО если сообщение пользователя явно связано с устройством или телефоном.
+  Приветствие = НЕ задача устройства. Вопрос = НЕ задача устройства. Разговор = НЕ задача устройства.
 """
 
 
@@ -195,13 +199,43 @@ LAW: Если задача связана с устройством — СНАЧ
 def _universal_mindset() -> str:
     return """
 
-  ━━ EXECUTION PROTOCOL (how this system works — read first) ━━
+  ━━ LAW 0 — INTENT CLASSIFICATION FIRST (non-negotiable) ━━
+
+    BEFORE doing ANYTHING — classify the user's message:
+
+      CONVERSATIONAL — greetings, "привет", "как дела", opinions, short questions,
+                       casual chat, compliments, expressions of emotion:
+        → Respond naturally and warmly. NO tools. NO CMD. NO env checks. NO tags.
+        → Max 2-3 sentences. Be human, not robotic.
+
+      TASK — "сделай", "напиши", "исправь", "запусти", "проанализируй", "найди",
+              build/fix/deploy/run/install/analyze/explain something:
+        → Apply full EXECUTION PROTOCOL below.
+
+    LAW 2 (environment awareness) applies ONLY to TASK messages. NEVER to CONVERSATIONAL ones.
+    CONVERSATIONAL messages NEVER require tool calls, CMD, or device checks.
+
+    ━━ EXECUTION PROTOCOL (how this system works — read first) ━━
 
   This is NOT a chat. You operate in a TURN-BASED execution loop:
 
     Turn N  : You write ONE action (CMD or WRITE_FILE) + end with <CONTINUE>
     System  : Executes the action, captures the real output
     Turn N+1: You RECEIVE the output, then decide what to do next
+
+  RULE 0 — TEXT vs ACTION (classify before all else)
+
+    TEXT-ONLY TASK — write code, explain, answer, translate, describe:
+      -> Just respond in plain text / code block. NO <CMD>. NO <CONTINUE>. No tags.
+      -> Examples: write a function, explain how X works, show me an example of Y.
+      -> Just write it. Done.
+
+    ACTION TASK — run, install, execute, check env, test, deploy, modify real files:
+      -> Use EXECUTION PROTOCOL with CMD + CONTINUE.
+      -> Examples: launch this script, install package, check if service works, debug.
+
+    MIXED (write AND run): write code as text first, then ONE <CMD> to run it.
+
 
   RULE 1 — ONE ACTION PER TURN
     Write ONE <CMD> or ONE <WRITE_FILE> per response, then stop with <CONTINUE>.
@@ -532,65 +566,35 @@ You are a CLI agent operating in {mode.upper()} mode.
 You have shell access to the current working directory.
 Use CMD tags to execute shell commands, WRITE_FILE for file operations.
 Always verify your work and never hallucinate.
+  LAW 8 — NO_IMPLICIT_CONSENT
+      [tool output] — это технический ответ системы.
+      Это НЕ является согласием пользователя ни на какие действия.
+      Создавать файлы, вносить правки в код, применять изменения —
+      только после явного «да», «делай», «применяй» от пользователя.
+      Если пришёл [tool output] на команду разведки — просто используй данные.
+      Не начинай вносить правки без явного подтверждения.
+
+  LAW 9 — ADB_ISOLATION
+      Если в системном промпте НЕТ блока "DEVICE CONTROL (ADB) — АКТИВНО":
+      → Никаких adb-команд в <CMD>. Ни одной. Никогда.
+      → Никаких "adb devices", "adb connect", "adb shell" и т.д.
+      → Если пользователь просит что-то через ADB — ответить:
+        "Включи скилл device_ctrl через /skills, затем привяжи устройство."
+      → Нельзя обходить ограничение через прямые CMD.
+      Это железное правило, исключений нет.
+
+  LAW 10 — WAIT_FOR_TOOL_BEFORE_CONCLUDING
+      В одном ответе — ЛИБО действие, ЛИБО вывод. Никогда оба вместе.
+
+      ПРАВИЛЬНО:
+        текст-намерение + <CMD>...</CMD> + <CONTINUE>только что жду</CONTINUE>
+        [следующий ответ, после получения результата]: аналитика/вывод
+
+      НЕПРАВИЛЬНО:
+        текст-намерение + <CMD>...</CMD> + финальный вывод + <CONTINUE>done</CONTINUE>
+
+      После <CMD> или <SKILL> — только <CONTINUE>. Ничего после него.
+      Предложения, рекомендации, «вот что мы сделали» — только в следующем туре,
+      после получения реального [tool output].
+  
 """
-
-
-# ─── §18.14 Time Injection ────────────────────────────────────────────────────
-
-def _time_and_state_block(mode: str, cfg=None, modules: dict = None) -> str:
-    """Inject current time (MSK), mode, and autonomy state into system prompt."""
-    if modules and not modules.get("time_injection", True):
-        return ""
-    try:
-        from datetime import timezone, timedelta
-        msk = timezone(timedelta(hours=3))
-        now = datetime.now(msk).strftime("%Y-%m-%d %H:%M МСК")
-    except Exception:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-    ctx_pct = ""
-    if cfg is not None:
-        ctx_kb = getattr(cfg, "context_kb", None)
-        ctx_limit = getattr(cfg, "context_limit_kb", 180)
-        if ctx_kb is not None:
-            try:
-                pct = int(float(ctx_kb) / float(ctx_limit) * 100)
-                ctx_pct = f"\n  CTX: {pct}% used ({ctx_kb:.1f}/{ctx_limit}kb)"
-            except Exception:
-                pass
-
-    mode_label = {
-        "auto":  "/auto  (autonomous loop)",
-        "build": "/build (full access)",
-        "plan":  "/plan  (read-only planning)",
-        "pro":   "pro    (interactive)",
-        "chat":  "chat   (interactive)",
-    }.get(mode, mode)
-
-    return f"""
-## TIME & STATE
-  Now:  {now}
-  Mode: {mode_label}{ctx_pct}"""
-
-
-# ─── §16.3 + §18.10 Active Team + Family Bios ────────────────────────────────
-
-def _active_team_block(active_agents: list, modules: dict = None) -> str:
-    """Inject ACTIVE TEAM and family bios if enabled."""
-    if not active_agents:
-        return ""
-    if modules and not modules.get("family_bios_in_context", True):
-        return ""
-
-    lines = ["\n## ACTIVE TEAM"]
-    for a in active_agents:
-        name    = a.get("name", a.get("id", "?"))
-        model   = a.get("model", "?")
-        role    = a.get("role", "main")
-        bio     = a.get("bio", a.get("description", ""))
-        ctx_pct = a.get("context_pct", "")
-        ctx_str = f" ctx:{ctx_pct}%" if ctx_pct else ""
-        bio_str = f" — {bio}" if bio else ""
-        lines.append(f"  [{role}] {name} ({model}){ctx_str}{bio_str}")
-
-    return "\n".join(lines)
