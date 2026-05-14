@@ -130,7 +130,7 @@ def _dispatch(tag: ParsedTag, ctx: "CommandContext", cfg) -> str | None:
                       "SWIPE", "PRESS", "WAIT", "UI_DUMP", "FIND_ELEMENT",
                       "APP_LAUNCH", "APP_LIST", "DEVICE_INFO", "ADB_STATUS"):
                                       return _handle_device_ctrl(tag, ctx, cfg)
-    elif name == "MCP_CALL":        return _handle_mcp_call(tag, ctx, cfg)
+  elif name == "MCP_CALL":        return _handle_mcp_call(tag, ctx, cfg)
   elif name == "REINCARNATE":     return _handle_reincarnate(tag, ctx)
   elif name == "IMAGE":           return _handle_image(tag, ctx, cfg)
   elif name == "ASK_USER_CHOICE":    return _handle_ask_user_choice(tag)
