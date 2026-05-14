@@ -566,16 +566,16 @@ def _handle_chat(text, messages, ctx, mgr, session_id, cfg) -> None:
   messages = _inject_continuity(messages, mgr, session_id)
 
   # Check actual configured provider — don't assume OR just because OR key exists
-    _prompt_text = messages[-1]["content"] if messages else ""
-    try:
-      from .agent.model_router import RouterModule as _RM
-      _active_provider, _, _ = _RM.select_model(_prompt_text, cfg)
-    except Exception:
-      _active_provider = "OpenRouter"
+  _prompt_text = messages[-1]["content"] if messages else ""
+  try:
+    from .agent.model_router import RouterModule as _RM
+    _active_provider, _, _ = _RM.select_model(_prompt_text, cfg)
+  except Exception:
+    _active_provider = "OpenRouter"
 
-    or_key = cfg.default_openrouter_key()
+  or_key = cfg.default_openrouter_key()
 
-    if or_key and _active_provider == "OpenRouter":
+  if or_key and _active_provider == "OpenRouter":
       full = ""
       try:
           from .ui.chat import StatusSpinner as _StatusSpinner
