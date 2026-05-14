@@ -139,6 +139,7 @@ class ModeCommand(ICommand):
             return
 
         _set_mode(arg)
+        ctx.current_mode = arg  # §PATCH-1
         _announce_mode(arg)
 
     def _show_status(self, current: str) -> None:
@@ -182,6 +183,7 @@ class _ModeShortcut(ICommand):
             )
             return
         _set_mode(self._mode_id)
+        ctx.current_mode = self._mode_id  # §PATCH-1
         _announce_mode(self._mode_id)
 
 
