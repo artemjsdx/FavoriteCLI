@@ -1,0 +1,12 @@
+{"ts": "2026-05-11T21:02:13.507545", "action": "launch", "detail": "com.exteragram.messenger"}
+{"ts": "2026-05-11T21:03:05.084359", "action": "screenshot", "detail": "[vision: vision_model не задана. Установи /device vision <модель>]"}
+{"ts": "2026-05-11T21:03:56.906397", "action": "press", "detail": "back"}
+{"ts": "2026-05-11T21:04:48.350779", "action": "tap", "detail": "x=234 y=194"}
+{"ts": "2026-05-11T21:06:04.179742", "action": "press", "detail": "back"}
+{"ts": "2026-05-11T21:06:55.833133", "action": "launch", "detail": "com.exteragram.messenger"}
+{"ts": "2026-05-11T21:09:33.696302", "action": "launch", "detail": "com.exteragram.messenger"}
+{"ts": "2026-05-11T21:10:24.894290", "action": "screenshot", "detail": "[vision: vision_model не задана. Установи /device vision <модель>]"}
+{"ts": "2026-05-11T21:10:55.324514", "action": "launch", "detail": "com.exteragram.messenger"}
+{"ts": "2026-05-11T21:13:11.035976", "action": "tap_text", "detail": "\"Подключить\" → [540,2222]"}
+{"ts": "2026-05-11T21:14:49.065377", "action": "tap", "detail": "x=100 y=100"}
+{"ts": "2026-05-11T21:17:02.455480", "action": "launch", "detail": "com.exteragram.messenger"}

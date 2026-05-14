@@ -238,3 +238,32 @@ def handle_adb_status(args: dict, body, ctx, cfg) -> str:
     connected = client.check_connected()
     status = "✓ подключено" if connected else "✗ не доступно"
     return f"[ADB_STATUS] {serial} — {status}"
+
+
+def handle_adb_shell(args: dict, body, ctx, cfg) -> str:
+    """FIX-2: Произвольная adb shell команда через правильный -s serial."""
+    cmd = args.get("cmd", "") or body or ""
+    if not cmd:
+        return "[ADB_SHELL ERROR] Укажи команду: shell:cmd=dumpsys activity top"
+    ui.print_action("adb_shell", cmd[:60])
+    try:
+        client = _get_client(cfg)
+        result = client._run("shell", cmd, timeout=30)
+        _save_history(ctx, "adb_shell", cmd[:60])
+        return f"[ADB_SHELL] $ adb -s {client.serial} shell {cmd}\n{result or chr(40)+chr(110)+chr(111)+chr(32)+chr(111)+chr(117)+chr(116)+chr(112)+chr(117)+chr(116)+chr(41)}"
+    except AdbError as e:
+        ui.print_adb_error(str(e))
+        return f"[ADB_SHELL ERROR] {e}"
+
+
+def handle_ui_dump_full(args: dict, body, ctx, cfg) -> str:
+    """FIX-3: Возвращает сырой XML dump первые 6000 символов для глубокого анализа."""
+    ui.print_action("ui_dump_full", "raw XML...")
+    try:
+        client = _get_client(cfg)
+        xml = client.ui_dump()
+        from .ui_dump import dump_summary_full
+        return dump_summary_full(xml)
+    except AdbError as e:
+        ui.print_adb_error(str(e))
+        return f"[UI_DUMP_FULL ERROR] {e}"

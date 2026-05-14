@@ -1,0 +1,3 @@
+[main-1] [INFO] The wait is complete. Now I will take a raw screenshot to visually confirm what is on the device screen.
+<SKILL:name=device_ctrl>screenshot</SKILL>
+<CONTINUE>Taking a raw screenshot. I expect to see an image of the device's screen. I will manually examine the description of the screenshot (if provided by the tool) to confirm if ExtraGram is in the foreground, or if it's still the launcher.</CONTINUE>

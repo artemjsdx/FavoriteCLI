@@ -1,0 +1,13 @@
+{
+  "session_id": "b0c8d14c-f74c-4e7d-ae90-6e5067e1177b",
+  "title": "Новая сессия",
+  "created_at": "2026-05-11T10:11:18.379116+00:00",
+  "workdir": "/data/data/com.termux/files/home",
+  "leading_main_agent": "",
+  "agents": [],
+  "stats": {
+    "total_tokens": 0,
+    "requests": 0,
+    "start_time": "2026-05-11T10:11:18.379144+00:00"
+  }
+}

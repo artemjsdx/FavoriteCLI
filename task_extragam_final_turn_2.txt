@@ -1,0 +1,5 @@
+[main-1] [INFO] Great! I found `com.exteragram.messenger` in the list, which is very likely "ExtraGram".
+
+Now I will launch the ExtraGram application using its package name.
+<SKILL:name=device_ctrl>launch:pkg=com.exteragram.messenger</SKILL>
+<CONTINUE>ExtraGram should now be launching. After a short wait, I will take a screenshot and analyze the UI to find the number of configured Telegram accounts.</CONTINUE>

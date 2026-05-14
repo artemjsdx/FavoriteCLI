@@ -316,6 +316,9 @@ class AgentsCommand(ICommand):
       if ch in ("0", ""): return
       if ch == "1": self._edit_main(ctx)
       elif ch == str(n): self._create_agent(ctx)
+      elif ch.lower() == "m": self._matrix_view(ctx)
+      elif ch.lower() == "p": self._peer_view(ctx)
+      elif ch.lower() == "b": self._batch_action(ctx)
       elif ch.isdigit():
         idx = int(ch) - 2
         if 0 <= idx < len(agents): self._edit_agent(agents[idx], ctx)
@@ -569,151 +572,150 @@ class AgentsCommand(ICommand):
 
     # ── Copy agent ────────────────────────────────────────────────
 
-    def _copy_agent(self, agent: dict, ctx: CommandContext) -> None:
-      ua = load_ua()
-      new_id = _next_agent_id(ua)
-      import copy
-      clone = copy.deepcopy(agent)
-      clone["id"] = new_id
-      clone["name"] = agent.get("name", new_id) + " (копия)"
-      clone["active"] = True
-      ua.setdefault("agents", []).append(clone)
-      save_ua(ua)
-      console.print()
-      console.print(f"  [#5fd7af]✓ Клон создан:[/] [cyan]{new_id}[/cyan]  ·  {escape(clone['name'])}")
+  def _copy_agent(self, agent: dict, ctx: CommandContext) -> None:
+    ua = load_ua()
+    new_id = _next_agent_id(ua)
+    import copy
+    clone = copy.deepcopy(agent)
+    clone["id"] = new_id
+    clone["name"] = agent.get("name", new_id) + " (копия)"
+    clone["active"] = True
+    ua.setdefault("agents", []).append(clone)
+    save_ua(ua)
+    console.print()
+    console.print(f"  [#5fd7af]✓ Клон создан:[/] [cyan]{new_id}[/cyan]  ·  {escape(clone['name'])}")
 
-    # ── Test / ping agent ─────────────────────────────────────────
+  # ── Test / ping agent ─────────────────────────────────────────
 
-    def _test_agent(self, agent: dict, ctx: CommandContext) -> None:
-      import time
-      aid = agent.get("id", "?")
-      role_id = agent.get("role_id", "")
-      model_id = agent.get("model") or ctx.config.get("model")
-      prov = agent.get("provider", "")
-      console.print()
-      console.print(f"  [dim]Тестирую {escape(aid)} ({escape(role_id)}) → {escape(str(model_id))}[/dim]")
-      console.print()
-      t0 = time.time()
-      try:
-        from ..agent.sub_agent import call_sub_agent
-        result = call_sub_agent(
-          agent=agent,
-          user_msg="Ответь одним словом: «работаю»",
-          ctx=ctx,
-          max_tokens=20,
-        )
-        elapsed = time.time() - t0
-        console.print(f"  [#5fd7af]✓ Ответ за {elapsed:.1f}с:[/] {escape(str(result)[:80])}")
-      except ImportError:
-        # Заглушка если sub_agent не реализован
-        elapsed = time.time() - t0
-        console.print(f"  [dim #888888]sub_agent модуль не подключён — ping OK за {elapsed:.2f}с[/dim #888888]")
-      except Exception as e:
-        elapsed = time.time() - t0
-        console.print(f"  [red]✗ Ошибка за {elapsed:.1f}с: {escape(str(e)[:120])}[/red]")
+  def _test_agent(self, agent: dict, ctx: CommandContext) -> None:
+    import time
+    aid = agent.get("id", "?")
+    role_id = agent.get("role_id", "")
+    model_id = agent.get("model") or ctx.config.get("model")
+    prov = agent.get("provider", "")
+    console.print()
+    console.print(f"  [dim]Тестирую {escape(aid)} ({escape(role_id)}) → {escape(str(model_id))}[/dim]")
+    console.print()
+    t0 = time.time()
+    try:
+      from ..agent.sub_agent import call_sub_agent
+      result = call_sub_agent(
+        agent=agent,
+        user_msg="Ответь одним словом: «работаю»",
+        ctx=ctx,
+        max_tokens=20,
+      )
+      elapsed = time.time() - t0
+      console.print(f"  [#5fd7af]✓ Ответ за {elapsed:.1f}с:[/] {escape(str(result)[:80])}")
+    except ImportError:
+      # Заглушка если sub_agent не реализован
+      elapsed = time.time() - t0
+      console.print(f"  [dim #888888]sub_agent модуль не подключён — ping OK за {elapsed:.2f}с[/dim #888888]")
+    except Exception as e:
+      elapsed = time.time() - t0
+      console.print(f"  [red]✗ Ошибка за {elapsed:.1f}с: {escape(str(e)[:120])}[/red]")
 
-    # ── Capabilities matrix ───────────────────────────────────────
+  # ── Capabilities matrix ───────────────────────────────────────
 
-    def _matrix_view(self, ctx: CommandContext) -> None:
-      from ..agent.agent_registry import AgentRegistry
-      reg = AgentRegistry.get()
-      matrix = reg.capabilities_matrix()
-      if not matrix:
-        console.print()
-        console.print("  [dim #888888]models_capabilities.json не найден[/dim #888888]")
-        return
+  def _matrix_view(self, ctx: CommandContext) -> None:
+    from ..agent.agent_registry import AgentRegistry
+    reg = AgentRegistry.get()
+    matrix = reg.capabilities_matrix()
+    if not matrix:
       console.print()
-      console.print("  [bold white]Матрица возможностей моделей[/bold white]")
-      console.print()
-      caps_cols = ["vision", "image_gen", "audio_in", "audio_out", "web_search"]
-      header_cells = ["  " + f"{'Модель':<28}"] + [f"{c[:8]:^9}" for c in caps_cols] + [f"{'ctx_kb':^8}", f"{'tier':^8}"]
-      from rich.text import Text as RText
-      console.print("  " + "  ".join([
-        f"[dim #666666]{'Модель':<28}[/dim #666666]",
-        *[f"[dim #5fafff]{c[:8]:^9}[/dim #5fafff]" for c in caps_cols],
-        "[dim #ffaf5f]ctx_kb [/dim #ffaf5f]",
-        "[dim #af87ff]tier   [/dim #af87ff]",
-      ]))
-      console.print("  " + "─"*90)
-      for entry in matrix:
-        row_parts = [f"[cyan]{entry.model_id[:28]:<28}[/cyan]"]
-        for cap in caps_cols:
-          v = getattr(entry, cap, False)
-          row_parts.append(f"[{'#5fd7af' if v else '#333333'}]{'✓' if v else '·':^9}[/]")
-        row_parts.append(f"[#ffaf5f]{entry.context_kb:^8}[/#ffaf5f]")
-        row_parts.append(f"[#af87ff]{entry.cost_tier:^8}[/#af87ff]")
-        console.print("  " + "  ".join(row_parts))
-      console.print()
-      _pick("  Enter для выхода → ")
+      console.print("  [dim #888888]models_capabilities.json не найден[/dim #888888]")
+      return
+    console.print()
+    console.print("  [bold white]Матрица возможностей моделей[/bold white]")
+    console.print()
+    caps_cols = ["vision", "image_gen", "audio_in", "audio_out", "web_search"]
+    header_cells = ["  " + f"{'Модель':<28}"] + [f"{c[:8]:^9}" for c in caps_cols] + [f"{'ctx_kb':^8}", f"{'tier':^8}"]
+    from rich.text import Text as RText
+    console.print("  " + "  ".join([
+      f"[dim #666666]{'Модель':<28}[/dim #666666]",
+      *[f"[dim #5fafff]{c[:8]:^9}[/dim #5fafff]" for c in caps_cols],
+      "[dim #ffaf5f]ctx_kb [/dim #ffaf5f]",
+      "[dim #af87ff]tier   [/dim #af87ff]",
+    ]))
+    console.print("  " + "─"*90)
+    for entry in matrix:
+      row_parts = [f"[cyan]{entry.model_id[:28]:<28}[/cyan]"]
+      for cap in caps_cols:
+        v = getattr(entry, cap, False)
+        row_parts.append(f"[{'#5fd7af' if v else '#333333'}]{'✓' if v else '·':^9}[/]")
+      row_parts.append(f"[#ffaf5f]{entry.context_kb:^8}[/#ffaf5f]")
+      row_parts.append(f"[#af87ff]{entry.cost_tier:^8}[/#af87ff]")
+      console.print("  " + "  ".join(row_parts))
+    console.print()
+    _pick("  Enter для выхода → ")
 
-    # ── Peer / main agents view ────────────────────────────────────
+  # ── Peer / main agents view ────────────────────────────────────
 
-    def _peer_view(self, ctx: CommandContext) -> None:
-      ua = load_ua()
-      peers = ua.get("peers", [])
+  def _peer_view(self, ctx: CommandContext) -> None:
+    ua = load_ua()
+    peers = ua.get("peers", [])
+    console.print()
+    console.print("  [bold white]Пир-агенты (peer mains)[/bold white]")
+    console.print()
+    if not peers:
+      console.print("  [dim #888888]Пир-агентов нет. Добавь через конфиг user_agents.json[/dim #888888]")
       console.print()
-      console.print("  [bold white]Пир-агенты (peer mains)[/bold white]")
-      console.print()
-      if not peers:
-        console.print("  [dim #888888]Пир-агентов нет. Добавь через конфиг user_agents.json[/dim #888888]")
-        console.print()
-        _pick("  Enter → ")
-        return
-      _sep()
-      for i, peer in enumerate(peers, 1):
-        pid  = peer.get("id", f"peer-{i}")
-        name = peer.get("name", pid)
-        model = _get_model_label(peer.get("model"))
-        active = peer.get("active", True)
-        sc, ss = _status_text(active)
-        console.print(f"  [dim #666666]{i}.[/dim #666666]  [bold magenta]{escape(pid)}[/bold magenta]  ·  {escape(name)}")
-        console.print(f"      [{sc}]{ss}[/{sc}]  [dim #ff8c00]{escape(model)}[/dim #ff8c00]")
-        endpoint = peer.get("endpoint")
-        if endpoint: console.print(f"      [dim #444444]{escape(endpoint[:60])}[/dim #444444]")
-        console.print()
-      _sep()
       _pick("  Enter → ")
+      return
+    _sep()
+    for i, peer in enumerate(peers, 1):
+      pid  = peer.get("id", f"peer-{i}")
+      name = peer.get("name", pid)
+      model = _get_model_label(peer.get("model"))
+      active = peer.get("active", True)
+      sc, ss = _status_text(active)
+      console.print(f"  [dim #666666]{i}.[/dim #666666]  [bold magenta]{escape(pid)}[/bold magenta]  ·  {escape(name)}")
+      console.print(f"      [{sc}]{ss}[/{sc}]  [dim #ff8c00]{escape(model)}[/dim #ff8c00]")
+      endpoint = peer.get("endpoint")
+      if endpoint: console.print(f"      [dim #444444]{escape(endpoint[:60])}[/dim #444444]")
+      console.print()
+    _sep()
+    _pick("  Enter → ")
 
-    # ── Batch enable / disable ────────────────────────────────────
+  # ── Batch enable / disable ────────────────────────────────────
 
-    def _batch_action(self, ctx: CommandContext) -> None:
-      ua = load_ua()
-      agents = ua.get("agents", [])
-      if not agents:
-        console.print("  [dim]Нет sub-агентов[/dim]")
-        return
-      console.print()
-      console.print("  [bold white]Групповое действие[/bold white]")
-      console.print()
-      console.print("  [dim #666666]1.[/dim #666666]  Включить всех")
-      console.print("  [dim #666666]2.[/dim #666666]  Отключить всех")
-      console.print("  [dim #666666]3.[/dim #666666]  Включить по тегу роли")
-      console.print("  [dim #666666]4.[/dim #666666]  Отключить по тегу роли")
-      console.print()
-      console.print("  [dim #444444]0  назад[/dim #444444]")
-      console.print()
-      ch = _pick()
-      if ch == "1":
-        for a in agents: a["active"] = True
-        save_ua(ua)
-        console.print(f"  [#5fd7af]✓ Все {len(agents)} агентов включены[/#5fd7af]")
-      elif ch == "2":
-        for a in agents: a["active"] = False
-        save_ua(ua)
-        console.print(f"  [#5fd7af]✓ Все {len(agents)} агентов отключены[/#5fd7af]")
-      elif ch in ("3", "4"):
-        enable = (ch == "3")
-        console.print("  [dim]Тег (напр. code, search, review):[/dim]")
-        tag = _pick("  > ").strip().lower()
-        if not tag: return
-        roles = load_roles()
-        role_ids_with_tag = {r["id"] for r in roles if tag in [t.lower() for t in r.get("tags", [])]}
-        count = 0
-        for a in agents:
-          if a.get("role_id") in role_ids_with_tag:
-            a["active"] = enable
-            count += 1
-        save_ua(ua)
-        action = "включены" if enable else "отключены"
-        console.print(f"  [#5fd7af]✓ {count} агентов {action} (тег «{escape(tag)}»)[/#5fd7af]")
-  
+  def _batch_action(self, ctx: CommandContext) -> None:
+    ua = load_ua()
+    agents = ua.get("agents", [])
+    if not agents:
+      console.print("  [dim]Нет sub-агентов[/dim]")
+      return
+    console.print()
+    console.print("  [bold white]Групповое действие[/bold white]")
+    console.print()
+    console.print("  [dim #666666]1.[/dim #666666]  Включить всех")
+    console.print("  [dim #666666]2.[/dim #666666]  Отключить всех")
+    console.print("  [dim #666666]3.[/dim #666666]  Включить по тегу роли")
+    console.print("  [dim #666666]4.[/dim #666666]  Отключить по тегу роли")
+    console.print()
+    console.print("  [dim #444444]0  назад[/dim #444444]")
+    console.print()
+    ch = _pick()
+    if ch == "1":
+      for a in agents: a["active"] = True
+      save_ua(ua)
+      console.print(f"  [#5fd7af]✓ Все {len(agents)} агентов включены[/#5fd7af]")
+    elif ch == "2":
+      for a in agents: a["active"] = False
+      save_ua(ua)
+      console.print(f"  [#5fd7af]✓ Все {len(agents)} агентов отключены[/#5fd7af]")
+    elif ch in ("3", "4"):
+      enable = (ch == "3")
+      console.print("  [dim]Тег (напр. code, search, review):[/dim]")
+      tag = _pick("  > ").strip().lower()
+      if not tag: return
+      roles = load_roles()
+      role_ids_with_tag = {r["id"] for r in roles if tag in [t.lower() for t in r.get("tags", [])]}
+      count = 0
+      for a in agents:
+        if a.get("role_id") in role_ids_with_tag:
+          a["active"] = enable
+          count += 1
+      save_ua(ua)
+      action = "включены" if enable else "отключены"
+      console.print(f"  [#5fd7af]✓ {count} агентов {action} (тег «{escape(tag)}»)[/#5fd7af]")

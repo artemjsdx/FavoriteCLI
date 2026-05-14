@@ -1,5 +1,6 @@
 """
 favorite/skills/device_ctrl/ui_dump.py — парсинг XML UI dump от uiautomator.
+FIX-3: max_items увеличен до 50, добавлены text-only элементы, dump_summary_full().
 """
 import xml.etree.ElementTree as ET
 import re
@@ -59,11 +60,80 @@ def find_all_clickable(xml_str: str) -> list[dict]:
     return results
 
 
-def dump_summary(xml_str: str, max_items: int = 20) -> str:
-    items = find_all_clickable(xml_str)
-    if not items:
-        return "[UI dump: кликабельных элементов не найдено]"
-    lines = [f"Кликабельные элементы ({len(items)}):"]
-    for it in items[:max_items]:
-        lines.append(f"  [{it['x']},{it['y']}] {it['text'][:50]}")
+def find_all_text_nodes(xml_str: str) -> list[dict]:
+    """FIX-3: Возвращает ВСЕ узлы с текстом (не только clickable)."""
+    try:
+        root = ET.fromstring(xml_str)
+    except ET.ParseError:
+        return []
+    results = []
+    seen_texts = set()
+    for node in root.iter():
+        text = (node.get("text", "") or node.get("content-desc", "")).strip()
+        if text and text not in seen_texts:
+            seen_texts.add(text)
+            bounds = node.get("bounds", "")
+            c = _bounds_center(bounds) if bounds else None
+            clickable = node.get("clickable") == "true"
+            results.append({
+                "text": text,
+                "x": c[0] if c else None,
+                "y": c[1] if c else None,
+                "clickable": clickable,
+                "class": node.get("class", ""),
+            })
+    return results
+
+
+def get_package_name(xml_str: str) -> str:
+    """FIX-3: Определяет пакет верхнего окна из XML."""
+    try:
+        root = ET.fromstring(xml_str)
+        # Ищем атрибут package у корневого узла или первого child
+        pkg = root.get("package", "")
+        if not pkg:
+            for child in root:
+                pkg = child.get("package", "")
+                if pkg:
+                    break
+        return pkg or "unknown"
+    except ET.ParseError:
+        return "parse_error"
+
+
+def dump_summary(xml_str: str, max_items: int = 50) -> str:
+    """FIX-3: Увеличен лимит до 50, добавлены текстовые узлы и имя пакета."""
+    pkg = get_package_name(xml_str)
+    clickable = find_all_clickable(xml_str)
+    all_text = find_all_text_nodes(xml_str)
+
+    lines = [f"[Пакет: {pkg}]"]
+
+    if not clickable and not all_text:
+        return "[UI dump: элементов не найдено]\n" + lines[0]
+
+    # Кликабельные элементы
+    if clickable:
+        lines.append(f"\nКликабельные элементы ({len(clickable)}):")
+        for it in clickable[:max_items]:
+            lines.append(f"  TAP [{it[x]},{it[y]}] {it[text][:60]}")
+
+    # Текстовые элементы (не кликабельные) — контент экрана
+    text_only = [t for t in all_text if not t["clickable"] and t["text"] not in
+                 {c["text"] for c in clickable}]
+    if text_only:
+        lines.append(f"\nТекст на экране ({len(text_only)}):")
+        for it in text_only[:30]:
+            coord = f"[{it[x]},{it[y]}] " if it["x"] is not None else ""
+            lines.append(f"  TXT {coord}{it[text][:60]}")
+
     return "\n".join(lines)
+
+
+def dump_summary_full(xml_str: str, max_chars: int = 6000) -> str:
+    """FIX-3: Возвращает сырой XML (обрезанный) для глубокого анализа агентом."""
+    pkg = get_package_name(xml_str)
+    header = f"[Пакет: {pkg}] [RAW XML, первые {max_chars} символов]\n"
+    if len(xml_str) > max_chars:
+        return header + xml_str[:max_chars] + "\n...[TRUNCATED]"
+    return header + xml_str

@@ -1,0 +1,5 @@
+[main-1] [INFO] The wait is complete. ExtraGram should now be loaded on the device.
+
+Now I will execute `adb shell uiautomator dump` to generate the UI XML dump on the device's `/sdcard/` directory.
+<CMD>adb shell uiautomator dump /sdcard/window_dump.xml</CMD>
+<CONTINUE>Executing `uiautomator dump` on the device. I expect this command to succeed and create `window_dump.xml` on the device's SD card. After this, I will pull the file to my local machine.</CONTINUE>

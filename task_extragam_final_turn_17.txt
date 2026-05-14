@@ -1,0 +1,5 @@
+[main-1] [INFO] ExtraGram has been launched.
+
+Now, I will wait briefly and then capture a raw screenshot to visually confirm that ExtraGram is on screen. This is a debug step to ensure the `launch` command is working as expected and the UI dump isn't being misled.
+<SKILL:name=device_ctrl>wait:ms=1000</SKILL>
+<CONTINUE>Waiting for 1 second. After that, I will take a raw screenshot to verify that ExtraGram is actually displayed on the device. This will help confirm if the previous UI dump issue was related to the app not being in the foreground.</CONTINUE>

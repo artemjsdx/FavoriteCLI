@@ -1,0 +1,29 @@
+=====================================================================
+FavoriteCLI — ДИАГНОСТИКА ПРОБЛЕМ (полный анализ, 35 ходов)
+=====================================================================
+
+ИТОГОВЫЙ ВЫВОД (из turn_35):
+Агент 35 ходов работал вхолостую — он делал adb через <CMD>
+без флага -s serial и захватывал UI Termux (Replit app),
+а не подключённого телефона. Это КОРЕНЬ всех проблем.
+
+ФИКСЫ ПРИМЕНЕНЫ В КОДЕ:
+
+FIX-1 [CRITICAL] vision_model установлен
+  device_ctrl.json: vision_model = qwen/qwen2.5-vl-72b-instruct:free
+
+FIX-2 [CRITICAL] Добавлен shell:cmd= в device_ctrl
+  tags.py: handle_adb_shell()
+  Агент теперь использует device_ctrl shell вместо сырого <CMD>adb
+
+FIX-3 [HIGH] ui_dump увеличен до 50 элементов + текстовые узлы
+  ui_dump.py: max_items=50, dump_summary_full() для сырого XML
+
+FIX-4 [HIGH] launch_app: monkey → am start + пауза 2000ms
+  adb_client.py: am start вместо monkey, auto-wait после launch
+
+FIX-5 [HIGH] AUTO_SYS обновлён: предупреждение про <CMD>adb
+  run_task.py: добавлено правило ЗАПРЕТ на <CMD>adb без -s
+
+FIX-6 [MEDIUM] Быстрый fallback при 429
+  llm.py: при 429 сразу прыжок на FavoriteAPI без 3 ретраёв

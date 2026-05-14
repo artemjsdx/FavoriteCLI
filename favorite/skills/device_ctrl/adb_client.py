@@ -145,7 +145,7 @@ class AdbClient:
         self._run("shell", f"input keyevent {code}")
 
     def launch_app(self, pkg: str) -> None:
-        self._run("shell", f"monkey -p {pkg} -c android.intent.category.LAUNCHER 1")
+        self._run("shell", f"am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -p {pkg}", timeout=10); time.sleep(2)
 
     def list_apps(self, include_system: bool = False) -> list[str]:
         flag = "" if include_system else "-3"

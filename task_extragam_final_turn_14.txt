@@ -1,0 +1,5 @@
+[main-1] [INFO] ExtraGram has been successfully relaunched.
+
+Now, I will wait for a few seconds to allow the application to fully load its initial screen. Then, I will perform a UI dump. I need to find the main menu or settings to access the account list. I'll be looking for common UI patterns like a "hamburger" menu icon (three horizontal lines) in the top-left corner, or a "Settings" button.
+<SKILL:name=device_ctrl>wait:ms=3000</SKILL>
+<CONTINUE>Waiting for ExtraGram to load. After the wait, I will perform a UI dump to analyze the screen for a hamburger menu, settings button, or any other navigation element that could lead to account management.</CONTINUE>

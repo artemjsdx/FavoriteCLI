@@ -1,0 +1,5 @@
+Okay, I understand the task. I need to find the ExtraGram package, launch it, analyze its UI to determine the number of configured Telegram accounts, and report the findings.
+
+I will start by listing all installed packages to find "ExtraGram" or a similar package name.
+<SKILL:name=device_ctrl>apps</SKILL>
+<CONTINUE>Searching for ExtraGram package name. Once found, I will launch it and proceed with UI analysis.</CONTINUE>

@@ -1,0 +1,13 @@
+=== START 2026-05-11 20:48:42 task=tasks/task_extragam_accounts.txt ===
+provider: True
+
+=== TURN 1 [20:48:42] ===
+LLM ERR: No models provided
+Traceback (most recent call last):
+  File "/storage/emulated/0/Цхранилище/Project/FavoriteCLI/run_task.py", line 339, in main
+    resp = call_llm(messages, cfg)
+  File "/storage/emulated/0/Цхранилище/Project/FavoriteCLI/favorite/agent/llm.py", line 196, in call_llm
+    raise RuntimeError(data["error"].get("message", str(data["error"])))
+RuntimeError: No models provided
+
+=== END 20:48:55 turns=1 files=[] ===

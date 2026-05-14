@@ -1,0 +1,5 @@
+[main-1] [INFO] The wait is complete. ExtraGram should now be fully loaded.
+
+I will perform a `ui_dump` to get the current screen's elements. My primary goal is to locate a "hamburger" menu icon (typically three horizontal lines) or a "Settings" button. If I don't see an explicit button with "Settings" or "Accounts", I will look for any icon in the top-left area that commonly serves as a menu toggle.
+<SKILL:name=device_ctrl>ui_dump</SKILL>
+<CONTINUE>UI dump requested. I will analyze the output to find a way to navigate to account settings. I am specifically looking for a hamburger menu icon or a settings button.</CONTINUE>

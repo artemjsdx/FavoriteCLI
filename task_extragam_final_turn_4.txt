@@ -1,0 +1,3 @@
+[main-1] [INFO] The wait is complete. Now I will take a screenshot and ask for an analysis of the number of accounts.
+<SKILL:name=device_ctrl>screenshot:q=сколько telegram аккаунтов настроено на экране? Если видны номера телефонов или имена аккаунтов, укажи их.</SKILL>
+<CONTINUE>Screenshot captured and sent for analysis. I expect a description of the screen content, specifically mentioning the number of Telegram accounts and any visible identifiers.</CONTINUE>

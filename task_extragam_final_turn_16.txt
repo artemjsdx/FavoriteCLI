@@ -1,0 +1,14 @@
+[main-1] [ERROR] I am getting the same UI dump (home screen with app icons) even after successfully launching ExtraGram. This is a critical issue as it implies the `launch` command is not correctly bringing ExtraGram to the foreground, or the `ui_dump` is always capturing the home screen.
+
+My assumption that `launch:pkg` was working as intended was incorrect, as the subsequent `ui_dump` consistently returns the launcher screen. This is a loop.
+
+**Strategy Change:**
+
+I need to ensure ExtraGram is actually in the foreground before taking a UI dump. I will try the following:
+
+1.  **Relaunch ExtraGram**, but this time I will immediately follow it with a very short `wait` and then a `screenshot` *without* a vision query, just to confirm what is on screen visually (even if I can't interpret it, I can see if it's the app or home screen).
+2.  If it's still the home screen, I will investigate other ways to bring the app to the foreground or check the `launch` command's effectiveness.
+
+For now, I'll try relaunching and immediately checking the raw screenshot output.
+<SKILL:name=device_ctrl>launch:pkg=com.exteragram.messenger</SKILL>
+<CONTINUE>Relaunching ExtraGram. After a very short wait, I will take a raw screenshot to visually confirm that ExtraGram is indeed in the foreground before proceeding with UI analysis.</CONTINUE>

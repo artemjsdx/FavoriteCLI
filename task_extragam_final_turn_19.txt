@@ -1,0 +1,15 @@
+[main-1] [ERROR] The `vision_model` is still not set, so I can't get a description of the screenshot. This means my "visual confirmation" step is not working as intended. I am in a loop where I cannot verify if the app is in the foreground.
+
+Since I cannot use the `screenshot` with a query or even get a basic description, and `ui_dump` keeps returning the home screen after a `launch` command, I need a new strategy to ensure ExtraGram is in the foreground and then get its UI elements.
+
+**New Strategy:**
+
+Instead of relying on `ui_dump` immediately after `launch`, I will try to use `adb shell dumpsys activity top` to get information about the currently focused activity. This command should tell me which package is truly active on the screen.
+
+1.  **Launch ExtraGram.**
+2.  **Wait** for a reasonable time.
+3.  **Run `adb shell dumpsys activity top | grep -i "ACTIVITY"`** to get the package name of the top activity. This will confirm if ExtraGram is truly in the foreground.
+4.  If ExtraGram is confirmed, then I will try `ui_dump` again. If not, I will re-evaluate.
+
+<SKILL:name=device_ctrl>launch:pkg=com.exteragram.messenger</SKILL>
+<CONTINUE>Relaunching ExtraGram. After a wait, I will use `adb shell dumpsys activity top` to verify that ExtraGram is the top activity. This will confirm if the app is truly in the foreground before attempting a UI dump.</CONTINUE>
