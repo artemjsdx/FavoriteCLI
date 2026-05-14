@@ -192,7 +192,7 @@ def print_shell_cmd(cmd: str) -> None:
     _sys.stdout.write("  > " + short + "\r")
     _sys.stdout.flush()
 
-  def print_shell_output(out: str, err: str, max_lines: int = 6) -> None:
+def print_shell_output(out: str, err: str, max_lines: int = 6) -> None:
       import sys as _sys
       # §PATCH-3 erase cmd line, no more spam
       _sys.stdout.write("\033[2K\r")
