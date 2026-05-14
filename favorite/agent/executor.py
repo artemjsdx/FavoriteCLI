@@ -264,7 +264,7 @@ def _handle_skill(tag: ParsedTag, ctx: "CommandContext", cfg) -> str | None:
   if skill_name in ("fs", "fstools"):
       print_skill_header(f"fs:{tag.args.get('op','read')}", tag.args.get("path", ""))
       return _run_fs(tag, ctx)
-  console.print(f"  [dim #666666]skill '{escape(skill_name)}' not found[/dim #666666]"); return None
+  return None  # skill not found — silent, no spam
 
 def _handle_continue(tag: ParsedTag) -> str:
   body = (tag.body or "").strip(); return body if body else "[continue]"
